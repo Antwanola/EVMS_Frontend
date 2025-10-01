@@ -10,6 +10,11 @@ export enum ChargePointStatus {
   FAULTED = 'Faulted'
 }
 
+export enum IsConnected {
+  CONNECTED = "true",
+  OFFLINE = "false"
+}
+
 export enum ConnectorStatus {
   AVAILABLE = 'Available',
   OCCUPIED = 'Occupied',
@@ -48,6 +53,7 @@ export interface ChargePoint {
   model?: string;
   serialNumber?: string;
   firmwareVersion?: string;
+  isConnected?: boolean
 }
 
 export interface Transaction {
