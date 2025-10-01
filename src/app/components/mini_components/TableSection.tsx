@@ -1,15 +1,29 @@
-
-// components/TabsSection.jsx
-import React from "react";
+'use client'
+import React, { useEffect, useState } from "react";
 import { Box, Flex, Heading } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import { StatusCard } from "./StatusCard";
-import { Mail } from "lucide-react";
 
-export const TabsSection = () => {
+import ChargePointConfigForm from "./Configuration_form";
+import { ConnectorTable } from "./ConnectorTables";
+import { RemoteControl } from "./RemoteControll";
+import LogsTable from "./Logs";
+import { PiPlugsConnectedFill, PiPlugsFill } from "react-icons/pi";
+import { ocppApi } from "@/app/lib/api";
+import { ChargePoint } from "@/app/types/ocpp";
+import { MdOutlineEventAvailable } from "react-icons/md";
+import { FaRegClock } from "react-icons/fa";
+import { formatDateTime } from "@/app/dashboard/page";
+
+interface ChargePointIDProps {
+  chargePoint: ChargePoint | null;
+  loading: boolean
+}
+
+export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading }) => {
   return (
     <Box borderBottomWidth="1px" borderColor="gray.200">
-      <Tabs.Root defaultValue="overview" variant="line" colorPalette="red">
+      <Tabs.Root defaultValue="overview" variant="line" colorPalette="brand">
         <Tabs.List>
           <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
           <Tabs.Trigger value="configuration">Configuration</Tabs.Trigger>
@@ -17,25 +31,45 @@ export const TabsSection = () => {
         </Tabs.List>
 
         <Tabs.Content value="overview">
-          <Heading fontWeight={'black'} textAlign={'left'}>Real-time Status</Heading>
+          <Heading fontWeight={"black"} textAlign={"left"}>Real-time Status</Heading>
           <Flex gap={20} fontSize="sm" color="gray.600" mt={4}>
-            <StatusCard value="Online" icon={Mail} title={'Status'} color={'green'} />
-            <StatusCard value="Charging" icon={Mail} title={'Status'} color={'orange'} />
-            <StatusCard value="2024-01-20 10:30 AM" icon={Mail} title={'Last Heartbeat'} color={'gray.300'} />
-            {/* <StatusCard value="45" icon={Mail} title={'hsjhv'} color={'gray.300'} /> */}
+            <StatusCard
+              value={chargePoint?.isConnected ? "Online" : loading ? "Loading..." : "Offline"}
+              icon={chargePoint?.isConnected ? PiPlugsConnectedFill : PiPlugsFill} // Fixed: removed .data and added space after ?
+              title={"Status"}
+              color={chargePoint?.isConnected ? "green" : "gray"} // Fixed: removed .data
+            />
+            <StatusCard
+              value={chargePoint?.realTimeData === null ? "Unavailable" : chargePoint?.realTimeData.status}
+              icon={chargePoint?.isConnected ? MdOutlineEventAvailable  : PiPlugsFill}
+              title={"Availability"}
+              color={chargePoint?.isConnected ? "blue" : "gray"} // Fixed: removed .data
+            />
+
+            <StatusCard
+              value={formatDateTime(chargePoint?.chargePoint.lastSeen)}
+              icon={FaRegClock }
+              title={"Last Heartbeat"}
+              color={chargePoint?.isConnected ? "blue" : "gray"} // Fixed: removed .data
+            />
+            {/* Add more StatusCards as needed */}
           </Flex>
+          <Box py={5}>
+            <ConnectorTable connectors={chargePoint?.chargePoint.connectors} />
+          </Box>
+          <Box mt={10}>
+            <RemoteControl />
+          </Box>
         </Tabs.Content>
-        
+
         <Tabs.Content value="configuration">
           <Box fontSize="sm" color="gray.600" mt={4}>
-            Configuration settings go here...
+            <ChargePointConfigForm initialData={chargePoint ?? undefined} />
           </Box>
         </Tabs.Content>
-        
+
         <Tabs.Content value="logs">
-          <Box fontSize="sm" color="gray.600" mt={4}>
-            Logs content goes here...
-          </Box>
+          <LogsTable />
         </Tabs.Content>
       </Tabs.Root>
     </Box>

@@ -1,3 +1,4 @@
+'use client'
 // components/PageHeader.tsx
 import React from "react";
 import { Box, Flex, HStack, Text, Heading, Breadcrumb } from "@chakra-ui/react";
@@ -10,11 +11,14 @@ import { MdChevronRight } from "react-icons/md";
 import { PageHeaderProps } from "@/app/types/header_types";
 import { LiaSlashSolid } from "react-icons/lia";
 
+
+
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
-  chargePointId,
+  chargePoint,
 }) => {
+  console.log(chargePoint)
   return (
     <Box py={1}>
       <Breadcrumb.Root>
@@ -29,7 +33,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
            </Breadcrumb.Separator>
           <Breadcrumb.Item>
             <BreadcrumbCurrentLink color="gray.900" fontWeight="medium">
-              {chargePointId}
+              {chargePoint?.chargePoint.id} 
             </BreadcrumbCurrentLink>
           </Breadcrumb.Item>
         </Breadcrumb.List>
@@ -39,12 +43,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <Heading size="3xl" textAlign={'center'} fontWeight={'black'}>{title}</Heading>
         <HStack>
           <Text fontSize="sm" color="gray.600">
-            {chargePointId}
+            {chargePoint?.chargePoint.id}
           </Text>
           <Box
             w={3}
             h={3}
-            bg="green.500"
+            bg={chargePoint?.isConnected? "green.500": 'gray.500'}
             rounded="full"
             css={{
               animation: "pulse 2s infinite",
@@ -53,7 +57,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </HStack>
       </Flex>
 
-      <Text color="gray.500">{subtitle}</Text>
+      <Text color="gray.500">{subtitle+` ${chargePoint?.chargePoint.id}`}</Text>
     </Box>
   );
 };

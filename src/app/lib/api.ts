@@ -2,7 +2,7 @@ import { ChargePoint, Transaction, OCPPCommand, OCPPCommandPayload } from '@/app
 import { ApiResponse, ApiError, SystemStatus } from '@/app/types/ocpp';
 
 class ApiClient {
-  constructor(private baseURL: string = 'http://localhost:3001') {}
+  constructor(private baseURL: string = 'http://18.171.110.52:3000') {}
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
@@ -10,6 +10,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: "include",
       ...options,
     };
 
@@ -61,8 +62,10 @@ export const ocppApi = {
   getChargePoints: (params: Record<string, string> = {}): Promise<ApiResponse<ChargePoint[]>> => 
     apiClient.get('/api/v1/charge-points', params),
     
-  getChargePoint: (id: string): Promise<ApiResponse<ChargePoint>> => 
-    apiClient.get(`/api/v1/charge-points/${id}`),
+  getChargePoint: (): Promise<ApiResponse<ChargePoint>> => 
+    apiClient.get(`/api/v1/charge-points`),
+
+  getSingleChargePoint: (id: string): Promise<ApiResponse<ChargePoint>> => apiClient.get(`/api/v1/charge-points/${id}`),
     
   addChargePoint: (data: Partial<ChargePoint>): Promise<ApiResponse<ChargePoint>> => 
     apiClient.post('/api/v1/charge-points', data),
@@ -72,8 +75,7 @@ export const ocppApi = {
     chargePointId: string, 
     command: T, 
     params: OCPPCommandPayload[T]
-  ): Promise<ApiResponse<any>> => 
-    apiClient.post(`/api/v1/charge-points/${chargePointId}/commands/${command}`, params),
+  ): Promise<ApiResponse<any>> => apiClient.post(`/api/v1/charge-points/${chargePointId}/commands/${command}`, params),
   
   // Transactions
   getTransactions: (filters: Record<string, string> = {}): Promise<ApiResponse<Transaction[]>> => 

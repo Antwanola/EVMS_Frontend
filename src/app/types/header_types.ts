@@ -1,14 +1,17 @@
+import { ChargePoint } from "./ocpp";
+
 export interface NavItem {
   label: string;
   icon: IconType;
   href: string;
   active?: boolean;
+  children?: string[] 
 }
 
 export interface PageHeaderProps {
   title: string;
   subtitle: string;
-  chargePointId: string;
+  chargePoint: ChargePoint | null;
 }
 
 export interface StatusCardProps {
