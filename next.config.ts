@@ -4,14 +4,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // ✅ Disable ESLint and TypeScript errors from blocking builds
   eslint: {
-    // ✅ Disable ESLint during next build
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // ✅ disable type errors blocking build
+    ignoreBuildErrors: true,
   },
 
+  // ✅ Rewrites for your backend API
   async rewrites() {
     return [
       {
@@ -21,14 +22,13 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // ✅ SVGR support for importing SVGs as React components
   webpack(config) {
-    // Add SVGR loader for SVGs
     config.module.rules.push({
       test: /\.svg$/i,
-      issuer: /\.[jt]sx?$/, // only apply on .js/.ts/.jsx/.tsx files
+      issuer: /\.[jt]sx?$/,
       use: ["@svgr/webpack"],
     });
-
     return config;
   },
 };
