@@ -151,3 +151,12 @@ export interface SystemStatus {
   connectedChargePoints: number;
   lastUpdated: string;
 }
+
+
+export interface userObject {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+  permissions: string[];
+}
