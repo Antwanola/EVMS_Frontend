@@ -44,8 +44,8 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
   onCancel,
 }) => {
   const [formData, setFormData] = useState<ChargePointConfig>({
-    ...defaultData,
     ...initialData,
+    ...defaultData,
   });
 console.log({initialData, formData})
   const handleInputChange = (field: keyof ChargePointConfig, value: string) => {
@@ -78,7 +78,7 @@ console.log({initialData, formData})
                 Charge Point ID
               </Field.Label>
               <Input
-                value={formData.chargePointId}
+                value={initialData.chargePoint.id}
                 onChange={(e) => handleInputChange('chargePointId', e.target.value)}
                 mt={1}
                 size="sm"
@@ -97,7 +97,7 @@ console.log({initialData, formData})
                 Vendor
               </Field.Label>
               <Input
-                value={formData.vendor}
+                value={initialData.chargePoint.vendor}
                 onChange={(e) => handleInputChange('vendor', e.target.value)}
                 mt={1}
                 size="sm"
@@ -116,7 +116,45 @@ console.log({initialData, formData})
                 Model
               </Field.Label>
               <Input
-                value={formData.model}
+                value={initialData.chargePoint.model}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                mt={1}
+                size="sm"
+                borderColor="gray.300"
+                _focus={{
+                  borderColor: '#ea2a33',
+                  boxShadow: '0 0 0 1px #ea2a33',
+                }}
+              />
+            </Field.Root>
+          </GridItem>
+
+          <GridItem>
+            <Field.Root>
+              <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
+                Meter Type
+              </Field.Label>
+              <Input
+                value={initialData.chargePoint.meterType}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                mt={1}
+                size="sm"
+                borderColor="gray.300"
+                _focus={{
+                  borderColor: '#ea2a33',
+                  boxShadow: '0 0 0 1px #ea2a33',
+                }}
+              />
+            </Field.Root>
+          </GridItem>
+
+          <GridItem>
+            <Field.Root>
+              <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
+                Meter Serial Number
+              </Field.Label>
+              <Input
+                value={initialData.chargePoint.meterSerialNumber}
                 onChange={(e) => handleInputChange('model', e.target.value)}
                 mt={1}
                 size="sm"
@@ -135,7 +173,7 @@ console.log({initialData, formData})
                 Firmware Version
               </Field.Label>
               <Input
-                value={formData.firmwareVersion}
+                value={initialData.chargePoint.firmwareVersion}
                 onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
                 disabled
                 mt={1}
@@ -146,6 +184,24 @@ console.log({initialData, formData})
               />
             </Field.Root>
           </GridItem>
+
+                    <GridItem>
+            <Field.Root>
+              <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
+                ICCID Number
+              </Field.Label>
+              <Input
+                value={initialData.chargePoint.iccid}
+                onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
+                mt={1}
+                size="sm"
+                borderColor="gray.300"
+                bg="gray.50"
+                color="gray.500"
+              />
+            </Field.Root>
+          </GridItem>
+
 
           <GridItem colSpan={{ base: 1, md: 2 }}>
             <Box borderTop="1px" borderColor="gray.200" pt={4} mt={2}>
@@ -161,7 +217,7 @@ console.log({initialData, formData})
                 Network Profile
               </Field.Label>
               <Select.Root
-                value={[formData.networkProfile]}
+                value="OCPP 1.6J JSON"
                 onValueChange={(e) => handleInputChange('networkProfile', e.value[0])}
                 size="sm"
               >

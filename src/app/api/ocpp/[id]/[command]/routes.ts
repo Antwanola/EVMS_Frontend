@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OCPPCommand, OCPPCommandPayload } from "@/types/ocpp";
-import { ApiResponse, ApiError } from "@/types/ocpp";
+import { OCPPCommand, OCPPCommandPayload } from "@/app/types/ocpp";
+import { ApiResponse, ApiError } from "@/app/types/ocpp";
 
 const BACKEND_URL = process.env.OCPP_BACKEND_URL || "http://localhost:3001";
 

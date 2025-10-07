@@ -1,5 +1,4 @@
-'use client'
-import { EmailIcon } from "@chakra-ui/icons";
+"use client";
 import {
   Field,
   Input,
@@ -10,14 +9,44 @@ import {
   Heading,
   Text,
   InputGroup,
-  InputElement,
 } from "@chakra-ui/react";
 import Image from "next/image";
-import { AiOutlineMail } from "react-icons/ai";
 import { CiLock, CiMail } from "react-icons/ci";
-import { MdEmail } from "react-icons/md";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+
 
 export default function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json(); 
+      console.log("Login response:", data);
+
+      if (res.ok && data.success) {
+        router.push("/dashboard");
+        router.refresh(); // Refresh to update auth state
+      } else {
+       setError(typeof data.error === "string" ? data.error : JSON.stringify(data.error));
+      }
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+    }
+  }
+
   return (
     <Stack
       spacing={4}
@@ -31,6 +60,7 @@ export default function LoginForm() {
         alignItems={"center"}
         justifyContent={{ base: "center" }}
       >
+        
         <Box
           bgColor={"blue.200"}
           w={{ base: "full", md: "full" }}  // Changed from "1/2"
@@ -64,10 +94,11 @@ export default function LoginForm() {
                 Please enter your details to sign in
               </Text>
             </Box>
+          <form onSubmit={handleSubmit}>
             <Field.Root id="email" mb={5}>
               <Field.Label>Email</Field.Label>
               <InputGroup  startElement={<CiMail  color="gray.200"/>}>
-              <Input type="email" placeholder="you@example.com" />
+              <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
               </InputGroup>
               <Field.HelperText>We'll never share your email.</Field.HelperText>
             </Field.Root>
@@ -75,16 +106,21 @@ export default function LoginForm() {
             <Field.Root id="password">
               <Field.Label>Password</Field.Label>
               <InputGroup startElement={<CiLock color="gray.200" />}>
-              <Input type="password" placeholder="••••••••" />
+              <Input type="password" placeholder="••••••••"  value={password} onChange={(e) => setPassword(e.target.value)}/>
               </InputGroup>
             </Field.Root>
 
-            <Button colorScheme="blue" w="full" mt={10}>
+            <Button colorScheme="blue" w="full" mt={10} type="submit">
               Log in
             </Button>
+            {error && (
+                <Text color="red.500" mt={3}>
+                  {error}
+                </Text>
+              )}
+            </form>
           </Box>
         </Box>
-
       </Flex>
     </Stack>
   );
