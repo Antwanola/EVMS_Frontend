@@ -2,7 +2,7 @@ import { ChargePoint, Transaction, OCPPCommand, OCPPCommandPayload, userObject }
 import { ApiResponse, ApiError, SystemStatus } from '@/app/types/ocpp';
 
 class ApiClient {
-  constructor(private baseURL: string = 'https://evms.folti.io') {}
+  constructor(private baseURL: string = 'https://evms.folti.io') { }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;

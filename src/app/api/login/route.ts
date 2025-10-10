@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
     try {
-       const res = await fetch(`http://18.171.110.52:3000/api/v1/auth/login`, {
+       const res = await fetch(`https://evms.folti.io/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
