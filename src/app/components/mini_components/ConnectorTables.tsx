@@ -1,23 +1,25 @@
 import React from "react";
-import { Box, Table, Badge, Button, Heading } from "@chakra-ui/react";
+import { Box, Table, Badge, Button, Heading, Text } from "@chakra-ui/react";
 import { HStack } from "@chakra-ui/react";
 import { BiSolidZap, BiError, BiCheckCircle, BiPause } from "react-icons/bi";
 import { IconType } from "react-icons";
+import Link from "next/link";
+import NextLink from "next/link";
 
 // Type definitions
 interface Connector {
   id: number;
   status:
-    | "AVAILABLE"
-    | "PREPARING"
-    | "CHARGING"
-    | "SUSPENDED_EVSE"
-    | "SUSPENDED_EV"
-    | "FINISHING"
-    | "RESERVED"
-    | "UNAVAILABLE"
-    | "FAULTED";
-  currentTransaction: string | null;
+  | "AVAILABLE"
+  | "PREPARING"
+  | "CHARGING"
+  | "SUSPENDED_EVSE"
+  | "SUSPENDED_EV"
+  | "FINISHING"
+  | "RESERVED"
+  | "UNAVAILABLE"
+  | "FAULTED";
+  currentTransactionId: number | null;
   connectorId: number;
 }
 
@@ -204,7 +206,9 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                     </Badge>
                   </Table.Cell>
                   <Table.Cell color="gray.500" px={6} py={4}>
-                    {connector.currentTransaction || "None"}
+                    <Link href={`/transactions/${connector.currentTransactionId}`} color="blue.500" _hover={{ textDecoration: "underline" }}>
+                      {connector.currentTransactionId || "None"}
+                    </Link>
                   </Table.Cell>
                   <Table.Cell textAlign="right" px={6} py={4}>
                     <Button
@@ -216,7 +220,7 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                       onClick={() =>
                         handleAction(connector.id, connector.status)
                       }
-                      disabled={connector.status === "Unavailable"}
+                      disabled={connector.status === "UNAVAILABLE"}
                     >
                       {getActionText(connector.status)}
                     </Button>

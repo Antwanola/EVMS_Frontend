@@ -1,21 +1,23 @@
 // src/app/api/login/route.ts
 // import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { API_BASE_URL } from "@/config/apiConfig";
 
 export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
+    console.log("login attempt", { API_BASE_URL});
     if(!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
     try {
-       const res = await fetch(`https://evms.folti.io/api/v1/auth/login`, {
+       const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     })
 
   const data = await res.json();
-  console.log(data.data.token)
+  console.log("token from login logic",data.data.token)
 
   if (!data.success || !data.data.token) {
     console.error("Login API error:", data);
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
   });
 
   response.cookies.set("token", data.data.token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 7 days

@@ -135,7 +135,7 @@ console.log({initialData, formData})
                 Meter Type
               </Field.Label>
               <Input
-                value={initialData.chargePoint.meterType}
+                value={initialData.chargePoint.meterType == null ? '' : initialData.chargePoint.meterType}
                 onChange={(e) => handleInputChange('model', e.target.value)}
                 mt={1}
                 size="sm"
