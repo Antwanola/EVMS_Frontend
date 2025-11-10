@@ -1,14 +1,21 @@
 import { ChargePoint, Transaction, OCPPCommand, OCPPCommandPayload, userObject } from '@/app/types/ocpp';
 import { ApiResponse, ApiError, SystemStatus } from '@/app/types/ocpp';
+import { API_BASE_URL } from "@/config/apiConfig"
 
 class ApiClient {
-  constructor(private baseURL: string = 'https://evms.folti.io') { }
+  constructor(private baseURL: string = `${API_BASE_URL}`) { }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("token="))?.split("=")[1];
+    console.log("API Client Token:", token);
+    
     const url = `${this.baseURL}${endpoint}`;
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
       },
       credentials: "include",
       ...options,
@@ -47,7 +54,6 @@ class ApiClient {
     return this.get<T>("/api/v1/auth/me");
   }
 
-
   async get<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
     const searchParams = new URLSearchParams(params).toString();
     const url = searchParams ? `${endpoint}?${searchParams}` : endpoint;
@@ -65,8 +71,6 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
-
-
 }
 
 export const apiClient = new ApiClient();
@@ -77,10 +81,8 @@ export const ocppApi = {
   getChargePoints: (params: Record<string, string> = {}): Promise<ApiResponse<ChargePoint[]>> =>
     apiClient.get('/api/v1/charge-points', params),
 
-  getChargePoint: (): Promise<ApiResponse<ChargePoint>> =>
-    apiClient.get(`/api/v1/charge-points`),
-
-  getSingleChargePoint: (id: string): Promise<ApiResponse<ChargePoint>> => apiClient.get(`/api/v1/charge-points/${id}`),
+  getChargePoint: (id: string): Promise<ApiResponse<ChargePoint>> => 
+    apiClient.get(`/api/v1/charge-points/${id}`),
 
   addChargePoint: (data: Partial<ChargePoint>): Promise<ApiResponse<ChargePoint>> =>
     apiClient.post('/api/v1/charge-points', data),
@@ -90,7 +92,8 @@ export const ocppApi = {
     chargePointId: string,
     command: T,
     params: OCPPCommandPayload[T]
-  ): Promise<ApiResponse<any>> => apiClient.post(`/api/v1/charge-points/${chargePointId}/commands/${command}`, params),
+  ): Promise<ApiResponse<any>> => 
+    apiClient.post(`/api/v1/charge-points/${chargePointId}/commands/${command}`, params),
 
   // Transactions
   getTransactions: (filters: Record<string, string> = {}): Promise<ApiResponse<Transaction[]>> =>
@@ -104,14 +107,13 @@ export const ocppApi = {
     apiClient.get('/api/v1/status'),
 };
 
-
 export const authApi = {
   signin: (email: string, password: string) =>
-    apiClient.signin<{ success: boolean; data:{token: string, user: userObject} }>(email, password),
+    apiClient.signin<{ success: boolean; data: { token: string, user: userObject } }>(email, password),
 
   signout: () =>
     apiClient.signout<{ success: boolean }>(),
 
   getCurrentUser: () =>
-    apiClient.getCurrentUser<{ user: any }>(),
+    apiClient.getCurrentUser<ApiResponse<userObject>>(),
 };
