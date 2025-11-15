@@ -13,9 +13,11 @@ import {
 } from "react-icons/md";
 import { NavItem, IconType } from "@/app/types/header_types";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export const Sidebar: React.FC = () => {
 const pathname = usePathname();
+const router = useRouter()
 
 function isActive(pathname: string, item: NavItem) {
   // Exact match for the item's href
@@ -35,6 +37,13 @@ function isActive(pathname: string, item: NavItem) {
   // Check if pathname starts with item.href + "/" (nested routes)
   return pathname.startsWith(item.href + "/");
 }
+
+
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" });
+    router.push("/login"); // Redirect to login page
+    console.log("Logged out successfully");
+  };
 
   const navItems: NavItem[] = [
     { label: "Dashboard", icon: MdDashboard, href: "/dashboard" },
@@ -95,18 +104,19 @@ function isActive(pathname: string, item: NavItem) {
 
         {/* Logout */}
         <Box mt="auto">
-          <NextLink href="/logout" passHref>
+          {/* <NextLink href="/logout" passHref> */}
             <Button
               variant="ghost"
               justifyContent="flex-start"
               size="sm"
               fontWeight="medium"
               w="full"
+              onClick={handleLogout}
             >
               <MdLogout size={16} style={{ marginRight: "8px" }} />
               Logout
             </Button>
-          </NextLink>
+          {/* </NextLink> */}
         </Box>
       </VStack>
     </Box>

@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
+        source: "/api/v1/:path*",
         destination: "http://18.171.110.52:3000/:path*",
       },
     ];

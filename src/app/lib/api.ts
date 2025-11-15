@@ -50,8 +50,8 @@ class ApiClient {
     return this.post<T>("/api/v1/auth/logout");
   }
 
-  async getCurrentUser<T>(): Promise<T> {
-    return this.get<T>("/api/v1/auth/me");
+  async getAllUsers<T>(): Promise<T> {
+    return this.get<T>("/api/v1/users");
   }
 
   async get<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
@@ -114,6 +114,6 @@ export const authApi = {
   signout: () =>
     apiClient.signout<{ success: boolean }>(),
 
-  getCurrentUser: () =>
-    apiClient.getCurrentUser<ApiResponse<userObject>>(),
+  getAllUsers: () =>
+    apiClient.getAllUsers<ApiResponse<userObject>>(),
 };
