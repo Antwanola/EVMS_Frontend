@@ -4,7 +4,7 @@ import { HStack } from "@chakra-ui/react";
 import { BiSolidZap, BiError, BiCheckCircle, BiPause } from "react-icons/bi";
 import { IconType } from "react-icons";
 import Link from "next/link";
-import NextLink from "next/link";
+
 
 // Type definitions
 interface Connector {
@@ -107,7 +107,9 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
     );
     // Add your action logic here
   };
-
+  const getActualTxnId = (txnId: number | null) => {
+    
+  }
   return (
     <Box mt={8}>
       <Heading size="lg" mb={4} fontWeight={"black"}>

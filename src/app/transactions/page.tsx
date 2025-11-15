@@ -175,8 +175,9 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          _disabled={{ opacity: 0.5, cursor: "not-allowed" }}
-        />
+          _disabled={{ opacity: 0.5, cursor: "not-allowed" }}>
+          <ChevronLeftIcon />
+          </IconButton>
 
         {getPageNumbers().map((page, index) => (
           <React.Fragment key={index}>
@@ -217,7 +218,9 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           _disabled={{ opacity: 0.5, cursor: "not-allowed" }}
-        />
+        >
+          < ChevronRightIcon/>
+          </IconButton>
       </HStack>
     </Flex>
   );

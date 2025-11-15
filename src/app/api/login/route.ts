@@ -17,14 +17,13 @@ export async function POST(req: NextRequest) {
     })
 
   const data = await res.json();
-  console.log("token from login logic",data.data.token)
 
   if (!data.success || !data.data.token) {
     console.error("Login API error:", data);
     throw new Error(data.message || "Login failed");
   }
 
-  // ✅ Set cookie here
+  // Set cookie here
   const response = NextResponse.json({
     success: data.success,
     user: data.user,
