@@ -1,13 +1,16 @@
 'use client';
 import { Box, Button, Field, Flex, Grid, GridItem, Heading, HStack, Input, Select, Text, Textarea, VStack } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Switch } from "@chakra-ui/react"
 import {useRouter} from 'next/navigation';
 import { useParams } from 'next/navigation';
+import { authApi, ocppApi } from '@/app/lib/api';
+import { userObject } from '@/app/types/ocpp';
 
 export default function EditUserPage() {
     const params = useParams(); 
-    const userId = params?.id as string; // get user ID from params
+    const userId = params?.id as string;
+    console.log('user id from params', userId) // get user ID from params
     const router = useRouter()
     const [formData, setFormData] = useState({
         firstName: 'John',
@@ -40,6 +43,23 @@ export default function EditUserPage() {
         console.log('Form cancelled');
         router.push('/users');
     };
+    useEffect(() => {
+        // Fetch user data by ID and populate form (mocked here)
+        const fetchUserData = async (id: string) => {
+            const response = await authApi.getUserByID(id);
+            const chunkedDown = response.data.user
+            console.log('data from edit page', response)
+            if (chunkedDown){
+                 setFormData(prev => ({
+            ...prev,
+            username: chunkedDown.username
+            
+        }));
+            }
+        }
+
+        fetchUserData(userId)
+    }, []);
 
     return (
         <Box bg="gray.50" minH="100vh" px={10} py={8}>

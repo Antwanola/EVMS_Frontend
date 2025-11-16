@@ -116,4 +116,7 @@ export const authApi = {
 
   getAllUsers: () =>
     apiClient.getAllUsers<ApiResponse<userObject>>(),
+
+  getUserByID: (id: string) =>
+    apiClient.get< ApiResponse<userObject>>(`/api/v1/users/${id}`),
 };
