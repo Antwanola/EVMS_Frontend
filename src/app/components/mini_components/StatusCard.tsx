@@ -17,6 +17,7 @@ import {
 import { IconType, StatusCardProps } from "@/app/types/header_types"
 
 export const StatusCard: React.FC<StatusCardProps> = ({ icon: Icon, title, value, color }) => {
+  console.log("value", value)
   return (
     <Card.Root size={'sm'} >
       <Card.Body >

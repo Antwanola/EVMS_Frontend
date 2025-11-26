@@ -3,54 +3,107 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+
+interface TokenValidation {
+  valid: boolean;
+  payload?: any;
+  error?: string;
+}
+
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Define public routes
   const publicRoutes = ["/login", "/signup"];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
+  // Get token from cookies
   const token = req.cookies.get("token")?.value;
-  console.log({ token });
+  
+  // Validate token once
+  const tokenValidation = token ? await isValidToken(token) : null;
 
-  // 1. Allow public routes if unauthenticated
+  // Handle public routes
   if (isPublicRoute) {
-    // If authenticated, redirect away from login/signup
-    if (token && await isValidToken(token)) {
+    // Redirect authenticated users away from login/signup
+    if (tokenValidation?.valid) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     return NextResponse.next();
   }
 
-  // 2. Block access to private routes if no token or invalid/expired token
-  if (!token || !(await isValidToken(token))) {
+  // Handle protected routes
+  if (!token || !tokenValidation?.valid) {
     const response = NextResponse.redirect(new URL("/login", req.url));
-    // Clear the invalid/expired token
-    response.cookies.delete("token");
+    
+    // Clear invalid/expired token
+    if (token) {
+      response.cookies.delete("token");
+    }
+    
     return response;
   }
 
-  // 3. Allow request (authenticated private route with valid token)
-  return NextResponse.next();
+  // Attach user info to headers for use in API routes/server components (optional)
+  const requestHeaders = new Headers(req.headers);
+  if (tokenValidation.payload) {
+    requestHeaders.set("x-user-id", tokenValidation.payload.userId || "");
+    requestHeaders.set("x-user-role", tokenValidation.payload.role || "");
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
-async function isValidToken(token: string): Promise<boolean> {
+
+async function isValidToken(token: string): Promise<TokenValidation> {
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "your-secret-key"
-    );
+    // Get secret from environment
+    const secret = process.env.JWT_SECRET;
     
-    await jwtVerify(token, secret);
-    return true;
-  } catch (error) {
-    // Token is invalid or expired
-    console.log("Token validation failed:", error);
-    return false;
+    if (!secret) {
+      console.error("JWT_SECRET is not defined in environment variables");
+      return { valid: false, error: "Server configuration error" };
+    }
+
+    const encodedSecret = new TextEncoder().encode(secret);
+    
+    // Verify token
+    const { payload } = await jwtVerify(token, encodedSecret);
+    
+    return { 
+      valid: true, 
+      payload 
+    };
+  } catch (error: any) {
+    // Log specific error types for debugging
+    if (error.code === "ERR_JWT_EXPIRED") {
+      console.log("Token expired");
+      return { valid: false, error: "Token expired" };
+    } else if (error.code === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED") {
+      console.log("Invalid token signature");
+      return { valid: false, error: "Invalid signature" };
+    }
+    
+    console.log("Token validation failed:", error.message);
+    return { valid: false, error: error.message };
   }
 }
 
 export const config = {
   matcher: [
-    "/((?!api/login|api/signup|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg)$).*)",
+    /*
+     * Match all request paths except:
+     * - api/login, api/signup (auth endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, other icons
+     * - public files (images, etc.)
+     */
+    "/((?!api/auth|api/login|api/signup|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp)$).*)",
   ],
-  runtime: "nodejs"
 };

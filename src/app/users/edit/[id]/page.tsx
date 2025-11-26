@@ -1,60 +1,108 @@
 'use client';
-import { Box, Button, Field, Flex, Grid, GridItem, Heading, HStack, Input, Select, Text, Textarea, VStack } from '@chakra-ui/react';
+import { Box, Button, createListCollection, Field, Flex, Grid, GridItem, Heading, HStack, Input, Portal, Select, Text, Textarea, VStack } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { Switch } from "@chakra-ui/react"
-import {useRouter} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { authApi, ocppApi } from '@/app/lib/api';
 import { userObject } from '@/app/types/ocpp';
+import { Toaster, toaster } from "@/components/ui/toaster"
 
 export default function EditUserPage() {
-    const params = useParams(); 
+    const params = useParams();
     const userId = params?.id as string;
-    console.log('user id from params', userId) // get user ID from params
+    console.log('user id from params', userId)
     const router = useRouter()
-    const [formData, setFormData] = useState({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 234 567 8900',
-        role: 'Admin',
-        department: 'Engineering',
-        status: 'Active',
-        joinDate: '2024-01-15',
-        isActive: true,
-        receiveNotifications: true,
-        bio: 'Experienced software engineer with a passion for building scalable applications.',
+    const [formData, setFormData] = useState<Partial<userObject["user"]>>({
+        username: '',
+        firstname: '',
+        lastname: '',
+        email: "",
+        phone: '',
+        role: '',
+        status: "",
+        // bio: '',
+        isActive: "",
+        // receiveNotifications: false,
     });
 
-    const handleInputChange = (field, value) => {
+    const roleCollection = createListCollection({
+        items: [
+            { label: "Admin", value: "ADMIN" },
+            { label: "Operator", value: "OPERATOR" },
+            { label: "Viewer", value: "VIEWER" },
+            { label: "Third party", value: "THIRD_PARTY" },
+        ],
+    });
+
+    const statusCollection = createListCollection({
+        items: [
+            { label: "Active", value: "Active" },
+            { label: "Inactive", value: "Inactive" },
+            { label: "Suspended", value: "Suspended" },
+        ],
+    });
+
+    const handleInputChange = (field: keyof userObject["user"], value: any) => {
+        console.log(value)
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        alert('User updated successfully!');
+
+        try {
+            const response = await authApi.updateUser(formData);
+            if (!response) {
+                  toaster.create({
+                    title: 'Update failed',
+                    description: 'Something went wrong.',
+                    type: 'error',
+                    duration: 5000,
+                });
+                return;
+            }
+             toaster.create({
+                    title: 'Update Successful',
+                    description: 'User data updated sucessfully!',
+                    type: 'success',
+                    duration: 1000,
+                });
+                router.push(`/users`)
+        } catch (error: any) {
+            toaster.create({
+                    title: 'Error',
+                    description: error.message || 'Unexpected error occurred.',
+                    type: 'error',
+                    duration: 1000,
+                });
+        }
     };
 
     const handleCancel = () => {
         console.log('Form cancelled');
         router.push('/users');
     };
+
     useEffect(() => {
-        // Fetch user data by ID and populate form (mocked here)
         const fetchUserData = async (id: string) => {
             const response = await authApi.getUserByID(id);
             const chunkedDown = response.data.user
-            console.log('data from edit page', response)
-            if (chunkedDown){
-                 setFormData(prev => ({
-            ...prev,
-            username: chunkedDown.username
-            
-        }));
+            // console.log('data from edit page', chunkedDown)
+            if (chunkedDown) {
+                setFormData(prev => ({
+                    ...prev,
+                    username: chunkedDown.username,
+                    firstname: chunkedDown.firstname,
+                    lastname: chunkedDown.lastname,
+                    phone: chunkedDown.phone,
+                    email: chunkedDown.email,
+                    role: chunkedDown.role,
+                    isActive: chunkedDown.isActive,
+                }));
             }
         }
 
@@ -70,9 +118,7 @@ export default function EditUserPage() {
                 <Text color="gray.600">Update user information and preferences</Text>
             </Box>
 
-            {/* Main Card */}
             <Box bg="white" rounded="xl" shadow="lg" border="1px" borderColor="gray.200" overflow="hidden">
-                {/* Card Header */}
                 <Box
                     bgGradient="linear(135deg, #ea2a33 0%, #c41e3a 100%)"
                     px={6}
@@ -86,10 +132,8 @@ export default function EditUserPage() {
                     </Heading>
                 </Box>
 
-                {/* Form Content */}
                 <Box p={{ base: 6, md: 8 }}>
                     <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
-                        {/* Personal Information Section */}
                         <GridItem colSpan={{ base: 1, md: 2 }}>
                             <Flex align="center" mb={4}>
                                 <Box h="1px" bg="gray.300" flex="1" />
@@ -112,8 +156,8 @@ export default function EditUserPage() {
                                     First Name <Box as="span" color="red.500">*</Box>
                                 </Field.Label>
                                 <Input
-                                    value={formData.firstName}
-                                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                                    value={formData.firstname || " "}
+                                    onChange={(e) => handleInputChange('firstname', e.target.value) ?? ""}
                                     px={4}
                                     py={2.5}
                                     fontSize="sm"
@@ -138,14 +182,40 @@ export default function EditUserPage() {
                                     Last Name <Box as="span" color="red.500">*</Box>
                                 </Field.Label>
                                 <Input
-                                    value={formData.lastName}
-                                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                                    value={formData.lastname || ""}
+                                    onChange={(e) => handleInputChange('lastname', e.target.value)}
                                     px={4}
                                     py={2.5}
                                     fontSize="sm"
                                     borderColor="gray.300"
                                     rounded="lg"
                                     placeholder="Enter last name"
+                                    _hover={{ borderColor: 'gray.400' }}
+                                    _focus={{
+                                        outline: 'none',
+                                        ring: 2,
+                                        ringColor: 'red.500',
+                                        borderColor: 'transparent',
+                                    }}
+                                    transition="all 0.2s"
+                                />
+                            </Field.Root>
+                        </GridItem>
+
+                        <GridItem>
+                            <Field.Root>
+                                <Field.Label color="gray.700" fontSize="sm" fontWeight="semibold" mb={2}>
+                                    User name <Box as="span" color="red.500">*</Box>
+                                </Field.Label>
+                                <Input
+                                    value={formData.username || ""}
+                                    onChange={(e) => handleInputChange('username', e.target.value)}
+                                    px={4}
+                                    py={2.5}
+                                    fontSize="sm"
+                                    borderColor="gray.300"
+                                    rounded="lg"
+                                    placeholder="Enter username"
                                     _hover={{ borderColor: 'gray.400' }}
                                     _focus={{
                                         outline: 'none',
@@ -171,7 +241,7 @@ export default function EditUserPage() {
                                     </Box>
                                     <Input
                                         type="email"
-                                        value={formData.email}
+                                        value={formData.email || ""}
                                         onChange={(e) => handleInputChange('email', e.target.value)}
                                         pl={10}
                                         pr={4}
@@ -206,7 +276,7 @@ export default function EditUserPage() {
                                     </Box>
                                     <Input
                                         type="tel"
-                                        value={formData.phone}
+                                        value={formData.phone ?? ""}
                                         onChange={(e) => handleInputChange('phone', e.target.value)}
                                         pl={10}
                                         pr={4}
@@ -228,7 +298,6 @@ export default function EditUserPage() {
                             </Field.Root>
                         </GridItem>
 
-                        {/* Role & Access Section */}
                         <GridItem colSpan={{ base: 1, md: 2 }} mt={6}>
                             <Flex align="center" mb={4}>
                                 <Box h="1px" bg="gray.300" flex="1" />
@@ -250,90 +319,47 @@ export default function EditUserPage() {
                                 <Field.Label color="gray.700" fontSize="sm" fontWeight="semibold" mb={2}>
                                     Role <Box as="span" color="red.500">*</Box>
                                 </Field.Label>
-                                <Select.Root
-                                    value={[formData.role]}
+                                <Select.Root 
+                                    collection={roleCollection} 
+                                    size="sm"
+                                    value={formData.role ? [formData.role] : []}
                                     onValueChange={(e) => handleInputChange('role', e.value[0])}
-                                    size="sm"
                                 >
-                                    <Select.Trigger
-                                        px={4}
-                                        py={2.5}
-                                        fontSize="sm"
-                                        borderColor="gray.300"
-                                        rounded="lg"
-                                        _hover={{ borderColor: 'gray.400' }}
-                                        _focus={{
-                                            outline: 'none',
-                                            ring: 2,
-                                            ringColor: 'red.500',
-                                            borderColor: 'transparent',
-                                        }}
-                                        transition="all 0.2s"
-                                    >
-                                        <Select.ValueText />
-                                    </Select.Trigger>
-                                    <Select.Content>
-                                        <Select.Item item="Admin">
-                                            <Select.ItemText>Admin</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Manager">
-                                            <Select.ItemText>Manager</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="User">
-                                            <Select.ItemText>User</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Viewer">
-                                            <Select.ItemText>Viewer</Select.ItemText>
-                                        </Select.Item>
-                                    </Select.Content>
-                                </Select.Root>
-                            </Field.Root>
-                        </GridItem>
-
-                        <GridItem>
-                            <Field.Root>
-                                <Field.Label color="gray.700" fontSize="sm" fontWeight="semibold" mb={2}>
-                                    Department
-                                </Field.Label>
-                                <Select.Root
-                                    value={[formData.department]}
-                                    onValueChange={(e) => handleInputChange('department', e.value[0])}
-                                    size="sm"
-                                >
-                                    <Select.Trigger
-                                        px={4}
-                                        py={2.5}
-                                        fontSize="sm"
-                                        borderColor="gray.300"
-                                        rounded="lg"
-                                        _hover={{ borderColor: 'gray.400' }}
-                                        _focus={{
-                                            outline: 'none',
-                                            ring: 2,
-                                            ringColor: 'red.500',
-                                            borderColor: 'transparent',
-                                        }}
-                                        transition="all 0.2s"
-                                    >
-                                        <Select.ValueText />
-                                    </Select.Trigger>
-                                    <Select.Content>
-                                        <Select.Item item="Engineering">
-                                            <Select.ItemText>Engineering</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Sales">
-                                            <Select.ItemText>Sales</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Marketing">
-                                            <Select.ItemText>Marketing</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Support">
-                                            <Select.ItemText>Support</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="HR">
-                                            <Select.ItemText>HR</Select.ItemText>
-                                        </Select.Item>
-                                    </Select.Content>
+                                    <Select.HiddenSelect />
+                                    <Select.Control>
+                                        <Select.Trigger
+                                            px={4}
+                                            py={2.5}
+                                            fontSize="sm"
+                                            borderColor="gray.300"
+                                            rounded="lg"
+                                            _hover={{ borderColor: 'gray.400' }}
+                                            _focus={{
+                                                outline: 'none',
+                                                ring: 2,
+                                                ringColor: 'red.500',
+                                                borderColor: 'transparent',
+                                            }}
+                                            transition="all 0.2s"
+                                        >
+                                            <Select.ValueText placeholder="Select role" />
+                                        </Select.Trigger>
+                                        <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                        </Select.IndicatorGroup>
+                                    </Select.Control>
+                                    <Portal>
+                                        <Select.Positioner>
+                                            <Select.Content>
+                                                {roleCollection.items.map((role) => (
+                                                    <Select.Item item={role} key={role.value}>
+                                                        {role.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                        </Select.Positioner>
+                                    </Portal>
                                 </Select.Root>
                             </Field.Root>
                         </GridItem>
@@ -344,38 +370,47 @@ export default function EditUserPage() {
                                     Status
                                 </Field.Label>
                                 <Select.Root
-                                    value={[formData.status]}
-                                    onValueChange={(e) => handleInputChange('status', e.value[0])}
+                                    collection={statusCollection}
                                     size="sm"
+                                    defaultValue={formData.status ? [formData.status] : []}
+                                    onValueChange={(e) => handleInputChange('status', e.value[0])}
                                 >
-                                    <Select.Trigger
-                                        px={4}
-                                        py={2.5}
-                                        fontSize="sm"
-                                        borderColor="gray.300"
-                                        rounded="lg"
-                                        _hover={{ borderColor: 'gray.400' }}
-                                        _focus={{
-                                            outline: 'none',
-                                            ring: 2,
-                                            ringColor: 'red.500',
-                                            borderColor: 'transparent',
-                                        }}
-                                        transition="all 0.2s"
-                                    >
-                                        <Select.ValueText />
-                                    </Select.Trigger>
-                                    <Select.Content>
-                                        <Select.Item item="Active">
-                                            <Select.ItemText>Active</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Inactive">
-                                            <Select.ItemText>Inactive</Select.ItemText>
-                                        </Select.Item>
-                                        <Select.Item item="Suspended">
-                                            <Select.ItemText>Suspended</Select.ItemText>
-                                        </Select.Item>
-                                    </Select.Content>
+                                    <Select.HiddenSelect />
+                                    <Select.Control>
+                                        <Select.Trigger
+                                            px={4}
+                                            py={2.5}
+                                            fontSize="sm"
+                                            borderColor="gray.300"
+                                            rounded="lg"
+                                            _hover={{ borderColor: 'gray.400' }}
+                                            _focus={{
+                                                outline: 'none',
+                                                ring: 2,
+                                                ringColor: 'red.500',
+                                                borderColor: 'transparent',
+                                            }}
+                                            transition="all 0.2s"
+                                           
+                                        >
+                                            <Select.ValueText placeholder="Select status" />
+                                        </Select.Trigger>
+                                        <Select.IndicatorGroup>
+                                            <Select.Indicator />
+                                        </Select.IndicatorGroup>
+                                    </Select.Control>
+                                    <Portal>
+                                        <Select.Positioner>
+                                            <Select.Content>
+                                                {statusCollection.items.map((status) => (
+                                                    <Select.Item item={status} key={status.value} >
+                                                        {status.label}
+                                                        <Select.ItemIndicator />
+                                                    </Select.Item>
+                                                ))}
+                                            </Select.Content>
+                                        </Select.Positioner>
+                                    </Portal>
                                 </Select.Root>
                             </Field.Root>
                         </GridItem>
@@ -387,7 +422,7 @@ export default function EditUserPage() {
                                 </Field.Label>
                                 <Input
                                     type="date"
-                                    value={formData.joinDate}
+                                    value={formData.createdAt ?? ""}
                                     disabled
                                     px={4}
                                     py={2.5}
@@ -401,7 +436,6 @@ export default function EditUserPage() {
                             </Field.Root>
                         </GridItem>
 
-                        {/* Additional Information Section */}
                         <GridItem colSpan={{ base: 1, md: 2 }} mt={6}>
                             <Flex align="center" mb={4}>
                                 <Box h="1px" bg="gray.300" flex="1" />
@@ -418,7 +452,7 @@ export default function EditUserPage() {
                             </Flex>
                         </GridItem>
 
-                        <GridItem colSpan={{ base: 1, md: 2 }}>
+                        {/* <GridItem colSpan={{ base: 1, md: 2 }}>
                             <Field.Root>
                                 <Field.Label color="gray.700" fontSize="sm" fontWeight="semibold" mb={2}>
                                     Bio
@@ -444,9 +478,8 @@ export default function EditUserPage() {
                                     transition="all 0.2s"
                                 />
                             </Field.Root>
-                        </GridItem>
+                        </GridItem> */}
 
-                        {/* Preferences Section */}
                         <GridItem colSpan={{ base: 1, md: 2 }} mt={6}>
                             <Flex align="center" mb={4}>
                                 <Box h="1px" bg="gray.300" flex="1" />
@@ -511,7 +544,6 @@ export default function EditUserPage() {
                     </Grid>
                 </Box>
 
-                {/* Footer Actions */}
                 <Flex
                     bg="gray.50"
                     px={6}
@@ -581,6 +613,7 @@ export default function EditUserPage() {
                                 <Box as="span">Save Changes</Box>
                             </Flex>
                         </Button>
+                        <Toaster />
                     </HStack>
                 </Flex>
             </Box>

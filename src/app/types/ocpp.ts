@@ -159,11 +159,15 @@ export interface userObject {
   user: {
     id: string;
     username: string;
+    firstname: string;
+    lastname: string;
     email: string;
     role: string;
     apiKey: string;
-    isActive: boolean;
+    isActive: string;
+    status: string;
     phone: string;
+    // bio: string;
     createdAt: Date;
     updatedAt: Date;
     idTag: string;

@@ -119,4 +119,6 @@ export const authApi = {
 
   getUserByID: (id: string) =>
     apiClient.get< ApiResponse<userObject>>(`/api/v1/users/${id}`),
+
+  updateUser: (data: Partial<userObject["user"]>) => apiClient.post(`/api/v1/users/update`, data)
 };

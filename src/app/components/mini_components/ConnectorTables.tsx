@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Table, Badge, Button, Heading, Text } from "@chakra-ui/react";
 import { HStack } from "@chakra-ui/react";
 import { BiSolidZap, BiError, BiCheckCircle, BiPause } from "react-icons/bi";
 import { IconType } from "react-icons";
 import Link from "next/link";
+import {ChargingSessionModal} from "../TXN_Charge_modal";
 
 
 // Type definitions
@@ -95,6 +96,10 @@ const getActionText = (status: Connector["status"]) => {
 export const ConnectorTable: React.FC<ConnectorTableProps> = ({
   connectors,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
+
   const sortedConnectors = (connectors: Connector[]) => {
     const filtered = connectors.filter(
       (connector) => connector.connectorId != 0
@@ -108,10 +113,22 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
     // Add your action logic here
   };
   const getActualTxnId = (txnId: number | null) => {
-    
+
+  }
+
+  const handleOpenModal = (id: number) => {
+    setSelectedTransactionId(id);
+    setIsModalOpen(true);
+
   }
   return (
     <Box mt={8}>
+        <ChargingSessionModal
+
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    transactionId={selectedTransactionId?? ""}
+                  />
       <Heading size="lg" mb={4} fontWeight={"black"}>
         Connectors
       </Heading>
@@ -156,7 +173,7 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                 px={6}
                 py={3}
               >
-                Current Transaction
+                Recent Transaction
               </Table.ColumnHeader>
               <Table.ColumnHeader
                 color="gray.900"
@@ -208,9 +225,17 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                     </Badge>
                   </Table.Cell>
                   <Table.Cell color="gray.500" px={6} py={4}>
-                    <Link href={`/transactions/${connector.currentTransactionId}`} color="blue.500" _hover={{ textDecoration: "underline" }}>
+                    <Text
+                    as="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleOpenModal(connector.currentTransactionId!);
+                      }}
+                      color="blue.500"
+                      _hover={{ textDecoration: "underline", cursor: "pointer" }}
+                    >
                       {connector.currentTransactionId || "None"}
-                    </Link>
+                    </Text>
                   </Table.Cell>
                   <Table.Cell textAlign="right" px={6} py={4}>
                     <Button
