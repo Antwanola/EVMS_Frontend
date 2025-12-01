@@ -1,42 +1,42 @@
 export enum ChargePointStatus {
-  AVAILABLE = 'Available',
-  PREPARING = 'Preparing',
-  CHARGING = 'Charging',
-  SUSPENDED_EVSE = 'SuspendedEVSE',
-  SUSPENDED_EV = 'SuspendedEV',
-  FINISHING = 'Finishing',
-  RESERVED = 'Reserved',
-  UNAVAILABLE = 'Unavailable',
-  FAULTED = 'Faulted'
+  AVAILABLE = "Available",
+  PREPARING = "Preparing",
+  CHARGING = "Charging",
+  SUSPENDED_EVSE = "SuspendedEVSE",
+  SUSPENDED_EV = "SuspendedEV",
+  FINISHING = "Finishing",
+  RESERVED = "Reserved",
+  UNAVAILABLE = "Unavailable",
+  FAULTED = "Faulted",
 }
 
 export enum IsConnected {
   CONNECTED = "true",
-  OFFLINE = "false"
+  OFFLINE = "false",
 }
 
 export enum ConnectorStatus {
-  AVAILABLE = 'Available',
-  OCCUPIED = 'Occupied',
-  RESERVED = 'Reserved',
-  UNAVAILABLE = 'Unavailable',
-  FAULTED = 'Faulted'
+  AVAILABLE = "Available",
+  OCCUPIED = "Occupied",
+  RESERVED = "Reserved",
+  UNAVAILABLE = "Unavailable",
+  FAULTED = "Faulted",
 }
 
 export enum TransactionStatus {
-  CHARGING = 'Charging',
-  STOPPED = 'Stopped',
-  SUSPENDED = 'Suspended'
+  CHARGING = "Charging",
+  STOPPED = "Stopped",
+  SUSPENDED = "Suspended",
 }
 
 export enum OCPPCommand {
-  UNLOCK_CONNECTOR = 'UnlockConnector',
-  RESET = 'Reset',
-  REMOTE_START_TRANSACTION = 'RemoteStartTransaction',
-  REMOTE_STOP_TRANSACTION = 'RemoteStopTransaction',
-  GET_CONFIGURATION = 'GetConfiguration',
-  CHANGE_CONFIGURATION = 'ChangeConfiguration',
-  CLEAR_CACHE = 'ClearCache'
+  UNLOCK_CONNECTOR = "UnlockConnector",
+  RESET = "Reset",
+  REMOTE_START_TRANSACTION = "RemoteStartTransaction",
+  REMOTE_STOP_TRANSACTION = "RemoteStopTransaction",
+  GET_CONFIGURATION = "GetConfiguration",
+  CHANGE_CONFIGURATION = "ChangeConfiguration",
+  CLEAR_CACHE = "ClearCache",
 }
 
 export interface ChargePoint {
@@ -53,7 +53,7 @@ export interface ChargePoint {
   model?: string;
   serialNumber?: string;
   firmwareVersion?: string;
-  isConnected?: boolean
+  isConnected?: boolean;
 }
 
 export interface Transaction {
@@ -76,7 +76,7 @@ export interface OCPPCommandPayload {
     connectorId: number;
   };
   [OCPPCommand.RESET]: {
-    type: 'Hard' | 'Soft';
+    type: "Hard" | "Soft";
   };
   [OCPPCommand.REMOTE_START_TRANSACTION]: {
     connectorId?: number;
@@ -99,9 +99,12 @@ export interface OCPPCommandPayload {
 export interface ChargingProfile {
   chargingProfileId: number;
   stackLevel: number;
-  chargingProfilePurpose: 'ChargePointMaxProfile' | 'TxDefaultProfile' | 'TxProfile';
-  chargingProfileKind: 'Absolute' | 'Recurring' | 'Relative';
-  recurrencyKind?: 'Daily' | 'Weekly';
+  chargingProfilePurpose:
+    | "ChargePointMaxProfile"
+    | "TxDefaultProfile"
+    | "TxProfile";
+  chargingProfileKind: "Absolute" | "Recurring" | "Relative";
+  recurrencyKind?: "Daily" | "Weekly";
   validFrom?: string;
   validTo?: string;
   chargingSchedule: ChargingSchedule;
@@ -110,7 +113,7 @@ export interface ChargingProfile {
 export interface ChargingSchedule {
   duration?: number;
   startSchedule?: string;
-  chargingRateUnit: 'W' | 'A';
+  chargingRateUnit: "W" | "A";
   chargingSchedulePeriod: ChargingSchedulePeriod[];
 }
 
@@ -145,18 +148,39 @@ export interface PaginatedResponse<T> {
 }
 
 export interface SystemStatus {
-  websocketServer: 'online' | 'offline';
-  database: 'connected' | 'disconnected';
-  apiServer: 'running' | 'stopped';
+  websocketServer: "online" | "offline";
+  database: "connected" | "disconnected";
+  apiServer: "running" | "stopped";
   connectedChargePoints: number;
   lastUpdated: string;
 }
 
-
 export interface userObject {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'user';
-  permissions: string[];
+  user: {
+    id: string;
+    username: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    role: string;
+    apiKey: string;
+    isActive: string;
+    status: string;
+    phone: string;
+    // bio: string;
+    createdAt: Date;
+    updatedAt: Date;
+    idTag: string;
+    // password is excluded
+
+    // Include relations
+    permissions: string[];
+    chargePointAccess: string[];
+  };
+}
+
+export interface ResponseObject {
+  data: userObject;
+  success: boolean;
+  timestamp: Date;
 }

@@ -106,11 +106,11 @@ export default function LoginForm() {
             <Field.Root id="password">
               <Field.Label>Password</Field.Label>
               <InputGroup startElement={<CiLock color="gray.200" />}>
-              <Input type="password" placeholder="••••••••"  value={password} onChange={(e) => setPassword(e.target.value)}/>
+              <Input type="password" placeholder="••••••••"  value={password} onChange={(e) => setPassword(e.target.value)} suppressHydrationWarning={true}/>
               </InputGroup>
             </Field.Root>
 
-            <Button colorScheme="blue" w="full" mt={10} type="submit">
+            <Button colorScheme="blue" w="full" mt={10} type="submit" suppressHydrationWarning={true}>
               Log in
             </Button>
             {error && (

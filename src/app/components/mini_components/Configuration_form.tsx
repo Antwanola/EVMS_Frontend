@@ -78,7 +78,7 @@ console.log({initialData, formData})
                 Charge Point ID
               </Field.Label>
               <Input
-                value={initialData.chargePoint.id}
+                value={initialData.chargePoint.id ?? ""}
                 onChange={(e) => handleInputChange('chargePointId', e.target.value)}
                 mt={1}
                 size="sm"
@@ -97,7 +97,7 @@ console.log({initialData, formData})
                 Vendor
               </Field.Label>
               <Input
-                value={initialData.chargePoint.vendor}
+                value={initialData.chargePoint.vendor ?? ""}
                 onChange={(e) => handleInputChange('vendor', e.target.value)}
                 mt={1}
                 size="sm"
@@ -154,7 +154,7 @@ console.log({initialData, formData})
                 Meter Serial Number
               </Field.Label>
               <Input
-                value={initialData.chargePoint.meterSerialNumber}
+                value={initialData.chargePoint.meterSerialNumber ?? ""}
                 onChange={(e) => handleInputChange('model', e.target.value)}
                 mt={1}
                 size="sm"
@@ -173,7 +173,7 @@ console.log({initialData, formData})
                 Firmware Version
               </Field.Label>
               <Input
-                value={initialData.chargePoint.firmwareVersion}
+                value={initialData.chargePoint.firmwareVersion ?? ""}
                 onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
                 disabled
                 mt={1}
@@ -191,7 +191,7 @@ console.log({initialData, formData})
                 ICCID Number
               </Field.Label>
               <Input
-                value={initialData.chargePoint.iccid}
+                value={initialData.chargePoint.iccid ?? ""}
                 onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
                 mt={1}
                 size="sm"

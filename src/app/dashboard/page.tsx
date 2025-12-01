@@ -90,7 +90,7 @@ export const formatDateTime = (isoString: string) => {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "UTC",
+    timeZone: "Africa/Lagos",
   }).format(date);
 };
 const Dashboard: React.FC<DashboardProps> = ({

@@ -358,7 +358,7 @@ const UsersPage: React.FC = () => {
                         _hover={{ bg: "gray.50" }}
                         transition="background 0.2s ease"
                       >
-                        <TableCell px={6} py={4} color="gray.500" fontWeight="medium">{user.idTag}</TableCell>
+                        <TableCell px={6} py={4} color="gray.500" fontWeight="medium"> {user.idTag?.idTag ?? 'N/A'}</TableCell>
                         <TableCell px={6} py={4} color="gray.500" fontWeight={'medium'}>{user.username}</TableCell>
                         <TableCell px={6} py={4} color="gray.500" fontWeight={'medium'}>{user.email}</TableCell>
                         <TableCell px={6} py={4} color="gray.500" fontWeight={'medium'}>{user.phone || "—"}</TableCell>
