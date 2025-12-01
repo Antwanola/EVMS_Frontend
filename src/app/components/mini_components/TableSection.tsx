@@ -21,6 +21,7 @@ interface ChargePointIDProps {
 }
 
 export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading }) => {
+  console.log("this is chargepoint", chargePoint?.chargePoint.connectors)
   return (
     <Box borderBottomWidth="1px" borderColor="gray.200">
       <Tabs.Root defaultValue="overview" variant="line" colorPalette="brand">
@@ -40,7 +41,7 @@ export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading
               color={chargePoint?.isConnected ? "green" : "gray"} // Fixed: removed .data
             />
             <StatusCard
-              value={chargePoint?.realTimeData === null ? "Unavailable" : chargePoint?.realTimeData.status}
+              value={chargePoint.realTimeData === null || chargePoint.realTimeData[0].status == null ? "Unavailable" : chargePoint.realTimeData[0].status}
               icon={chargePoint?.isConnected ? MdOutlineEventAvailable  : PiPlugsFill}
               title={"Availability"}
               color={chargePoint?.isConnected ? "blue" : "gray"} // Fixed: removed .data

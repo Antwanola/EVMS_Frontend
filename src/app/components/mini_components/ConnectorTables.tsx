@@ -190,7 +190,7 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {sortedConnectors(connectors ?? defaultConnectors).map(
+            {sortedConnectors(connectors??[]).map(
               (connector) => (
                 <Table.Row
                   key={connector.id}
@@ -229,10 +229,16 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                     as="button"
                       onClick={(e) => {
                         e.preventDefault();
-                        handleOpenModal(connector.currentTransactionId!);
-                      }}
-                      color="blue.500"
-                      _hover={{ textDecoration: "underline", cursor: "pointer" }}
+                       if (connector.currentTransactionId) { 
+        handleOpenModal(connector.currentTransactionId);
+      }
+    }}
+    color={connector.currentTransactionId ? "blue.500" : "gray.500"} // Use blue only if ID exists
+    _hover={
+      connector.currentTransactionId
+        ? { textDecoration: "underline", cursor: "pointer" }
+        : {}
+    }
                     >
                       {connector.currentTransactionId || "None"}
                     </Text>

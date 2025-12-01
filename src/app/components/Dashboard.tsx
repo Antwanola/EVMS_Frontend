@@ -24,7 +24,6 @@ export const EVChargeDashboard: React.FC<ID> = ({ id }) => {
     () => chargePoints.find((item) => item.chargePoint?.id === id) as ChargePoint,
     [chargePoints, id]
   );
-  // console.log(charger )
 
   if (loading) {
     return (
