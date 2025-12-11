@@ -30,6 +30,7 @@ import {
 } from "@chakra-ui/icons"
 import { ocppApi } from "../lib/api"
 import { formatDateTime } from "../dashboard/page"
+import { formatRelativeTime, formatTimeForTxn } from "@/Util/formatter"
 
 //
 // Types
@@ -281,8 +282,8 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
         id: txn.id,
         transactionId: txn.transactionId,
         chargePointId: txn.chargePointId,
-        idTag: txn.idTag,
-        startTimestamp: formatDateTime(txn.startTimestamp),
+        idTag: txn.idTag.idTag,
+        startTimestamp: formatTimeForTxn(txn.startTimestamp),
         stopTimestamp: formatDateTime(txn.stopTimestamp),
         meterStart: txn.meterStart,
         meterStop: txn.meterStop,
