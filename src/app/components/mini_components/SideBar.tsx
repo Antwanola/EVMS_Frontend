@@ -75,7 +75,7 @@ function isActive(pathname: string, item: NavItem) {
         <HStack mb={4}>
           <Avatar.Root>
             <Avatar.Fallback name="Segun Adebayo" />
-            <Avatar.Image src="https://bit.ly/sage-adebayo" />
+            <Avatar.Image src="/Antwan.jpg" />
           </Avatar.Root>
         </HStack>
 

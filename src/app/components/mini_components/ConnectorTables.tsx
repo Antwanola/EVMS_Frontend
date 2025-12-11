@@ -4,7 +4,9 @@ import { HStack } from "@chakra-ui/react";
 import { BiSolidZap, BiError, BiCheckCircle, BiPause } from "react-icons/bi";
 import { IconType } from "react-icons";
 import Link from "next/link";
-import {ChargingSessionModal} from "../TXN_Charge_modal";
+import { ChargingSessionModal } from "../TXN_Charge_modal";
+import { CgUnavailable } from "react-icons/cg";
+import { TiCancelOutline } from "react-icons/ti";
 
 
 // Type definitions
@@ -36,7 +38,7 @@ const statusIcons: Record<string, IconType | null> = {
   SUSPENDED_EV: BiPause,
   FINISHING: BiSolidZap,
   RESERVED: BiPause,
-  UNAVAILABLE: null,  // no icon
+  UNAVAILABLE: TiCancelOutline ,
   FAULTED: BiError,
 };
 
@@ -123,12 +125,12 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
   }
   return (
     <Box mt={8}>
-        <ChargingSessionModal
+      <ChargingSessionModal
 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    transactionId={selectedTransactionId?? ""}
-                  />
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        transactionId={selectedTransactionId ?? ""}
+      />
       <Heading size="lg" mb={4} fontWeight={"black"}>
         Connectors
       </Heading>
@@ -190,7 +192,7 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {sortedConnectors(connectors??[]).map(
+            {sortedConnectors(connectors ?? []).map(
               (connector) => (
                 <Table.Row
                   key={connector.id}
@@ -226,19 +228,19 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                   </Table.Cell>
                   <Table.Cell color="gray.500" px={6} py={4}>
                     <Text
-                    as="button"
+                      as="button"
                       onClick={(e) => {
                         e.preventDefault();
-                       if (connector.currentTransactionId) { 
-        handleOpenModal(connector.currentTransactionId);
-      }
-    }}
-    color={connector.currentTransactionId ? "blue.500" : "gray.500"} // Use blue only if ID exists
-    _hover={
-      connector.currentTransactionId
-        ? { textDecoration: "underline", cursor: "pointer" }
-        : {}
-    }
+                        if (connector.currentTransactionId) {
+                          handleOpenModal(connector.currentTransactionId);
+                        }
+                      }}
+                      color={connector.currentTransactionId ? "blue.500" : "gray.500"} // Use blue only if ID exists
+                      _hover={
+                        connector.currentTransactionId
+                          ? { textDecoration: "underline", cursor: "pointer" }
+                          : {}
+                      }
                     >
                       {connector.currentTransactionId || "None"}
                     </Text>

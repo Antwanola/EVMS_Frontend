@@ -26,6 +26,16 @@ export function formatTimestamp(timestamp: string): string {
   return new Date(timestamp).toLocaleString();
 }
 
+export const formatTimeForTxn = (isoString: string) => {
+  if (!isoString) return "-";
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Africa/Lagos",
+  }).format(date);
+};
+
 export function formatRelativeTime(timestamp: string): string {
   const now = new Date();
   const past = new Date(timestamp);
