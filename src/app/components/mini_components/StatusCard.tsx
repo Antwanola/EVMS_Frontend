@@ -23,7 +23,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ icon: Icon, title, value
       <Card.Body >
         <HStack >
           <Box p={3} bg={`${color}.100`} rounded="full" color={`${color}.600`}>
-            <Icon size={12} />
+            <Icon size={12}/>
           </Box>
           <VStack align="start" pr={20}>
             <Text fontSize="sm" color="gray.500">

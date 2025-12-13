@@ -178,7 +178,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           disabled={currentPage === 1}
           _disabled={{ opacity: 0.5, cursor: "not-allowed" }}>
           <ChevronLeftIcon />
-          </IconButton>
+        </IconButton>
 
         {getPageNumbers().map((page, index) => (
           <React.Fragment key={index}>
@@ -220,8 +220,8 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           disabled={currentPage === totalPages}
           _disabled={{ opacity: 0.5, cursor: "not-allowed" }}
         >
-          < ChevronRightIcon/>
-          </IconButton>
+          < ChevronRightIcon />
+        </IconButton>
       </HStack>
     </Flex>
   );
@@ -282,9 +282,9 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
         id: txn.id,
         transactionId: txn.transactionId,
         chargePointId: txn.chargePointId,
-        idTag: txn.idTag.idTag,
+        idTag: txn.idTag?.idTag ?? "—",
         startTimestamp: formatTimeForTxn(txn.startTimestamp),
-        stopTimestamp: formatDateTime(txn.stopTimestamp),
+        stopTimestamp: formatTimeForTxn(txn.stopTimestamp),
         meterStart: txn.meterStart,
         meterStop: txn.meterStop,
         energy: calculateEnergy(txn.meterStart, txn.meterStop),
@@ -392,21 +392,24 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
           borderColor="gray.200"
         >
           <Card.Body p={0}>
-            <Box overflowX="auto">
-              <Table.Root>
-                <TableHeader bg="gray.50">
-                  <TableRow>
-                    <TableColumnHeader>Transaction ID</TableColumnHeader>
-                    <TableColumnHeader>Charge Point</TableColumnHeader>
-                    <TableColumnHeader>User (ID Tag)</TableColumnHeader>
-                    <TableColumnHeader>Start Time</TableColumnHeader>
-                    <TableColumnHeader>End Time</TableColumnHeader>
-                    <TableColumnHeader>Energy (kWh)</TableColumnHeader>
-                    <TableColumnHeader>Duration</TableColumnHeader>
-                    <TableColumnHeader>Status</TableColumnHeader>
+            <Box overflow="hidden" rounded="xl" border="1px" borderColor="gray.200" bg="white">
+              <Table.Root size={'sm'}>
+                <TableHeader bg="gray.100">
+                  <TableRow bg={'gray.100'}>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Transaction ID</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Charge Point</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>User (ID Tag)</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Start Time</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>End Time</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Energy (kWh)</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Duration</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Start SoC</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Stop SoC</TableColumnHeader>
+                    <TableColumnHeader px={3} py={3} fontWeight={'900'} fontSize={12}>Status</TableColumnHeader>
+
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody fontSize={12} gap={5}>
                   {isLoading && allTransactions.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} textAlign="center" py={8}>
@@ -428,12 +431,14 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
                       >
                         <TableCell>{transaction.transactionId}</TableCell>
                         <TableCell>{transaction.chargePointId}</TableCell>
-                        <TableCell>{transaction.idTag}</TableCell>
+                        <TableCell>{transaction.idTag ?? ""}</TableCell>
                         <TableCell>{transaction.startTimestamp}</TableCell>
                         <TableCell>{transaction.stopTimestamp || "—"}</TableCell>
                         <TableCell>{transaction.energy?.toFixed(2) || "0.00"}</TableCell>
                         <TableCell>{transaction.duration || "—"}</TableCell>
-                        <TableCell>
+                        <TableCell>{transaction.meterStart}</TableCell>
+                        <TableCell>{transaction.meterStop || "—"}</TableCell>
+                          <TableCell>
                           <Badge
                             colorPalette={getStatusColor(transaction.status)}
                             borderRadius="full"

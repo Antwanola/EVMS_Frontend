@@ -14,6 +14,7 @@ import { ChargePoint } from "@/app/types/ocpp";
 import { MdOutlineEventAvailable } from "react-icons/md";
 import { FaRegClock } from "react-icons/fa";
 import { formatDateTime } from "@/app/dashboard/page";
+import { FaHeartCircleBolt } from "react-icons/fa6";
 
 interface ChargePointIDProps {
   chargePoint: ChargePoint | null;
@@ -49,9 +50,9 @@ export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading
 
             <StatusCard
               value={formatDateTime(chargePoint?.chargePoint.lastSeen)}
-              icon={FaRegClock }
+              icon={FaHeartCircleBolt}
               title={"Last Heartbeat"}
-              color={chargePoint?.isConnected ? "blue" : "gray"} // Fixed: removed .data
+              color={chargePoint?.isConnected ? "green" : "gray"} // Fixed: removed .data
             />
             {/* Add more StatusCards as needed */}
           </Flex>
