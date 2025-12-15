@@ -45,6 +45,8 @@ interface Transactions {
   meterStart: number
   meterStop: number | null
   energy?: number
+  startSoC?: number | null
+  stopSoC?: number | null
   duration?: string
   status: "Completed" | "In Progress" | "Failed"
 }
@@ -287,6 +289,8 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
         stopTimestamp: formatTimeForTxn(txn.stopTimestamp),
         meterStart: txn.meterStart,
         meterStop: txn.meterStop,
+        startSoC: txn.startSoC,
+        stopSoC: txn.stopSoC,
         energy: calculateEnergy(txn.meterStart, txn.meterStop),
         duration: calculateDuration(txn.startTimestamp, txn.stopTimestamp),
         status: determineStatus(txn.stopTimestamp, txn.stopReason),
@@ -436,8 +440,8 @@ export const TransactionLogs: React.FC<TransactionLogsProps> = ({
                         <TableCell>{transaction.stopTimestamp || "—"}</TableCell>
                         <TableCell>{transaction.energy?.toFixed(2) || "0.00"}</TableCell>
                         <TableCell>{transaction.duration || "—"}</TableCell>
-                        <TableCell>{transaction.meterStart}</TableCell>
-                        <TableCell>{transaction.meterStop || "—"}</TableCell>
+                        <TableCell>{transaction.startSoC || "—"}</TableCell>
+                        <TableCell>{transaction.stopSoC || "—"}</TableCell>
                           <TableCell>
                           <Badge
                             colorPalette={getStatusColor(transaction.status)}
