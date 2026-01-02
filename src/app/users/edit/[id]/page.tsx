@@ -83,7 +83,6 @@ export default function EditUserPage() {
     };
 
     const handleCancel = () => {
-        console.log('Form cancelled');
         router.push('/users');
     };
 

@@ -31,6 +31,7 @@ import {
 import { ocppApi } from "../lib/api"
 import { formatDateTime } from "../dashboard/page"
 import { formatRelativeTime, formatTimeForTxn } from "@/Util/formatter"
+import { calculateDuration, calculateEnergy } from "@/helper"
 
 //
 // Types
@@ -80,29 +81,9 @@ const getStatusColor = (status: Transactions["status"]): string => {
   }
 }
 
-//
-// Helper function to calculate duration
-//
-const calculateDuration = (start: string, end: string | null): string => {
-  if (!end) return "Ongoing"
 
-  const startTime = new Date(start).getTime()
-  const endTime = new Date(end).getTime()
-  const diff = endTime - startTime
+// 
 
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-  return `${hours}h ${minutes}m`
-}
-
-//
-// Helper function to calculate energy
-//
-const calculateEnergy = (meterStart: number, meterStop: number | null): number => {
-  if (!meterStop) return 0
-  return (meterStop - meterStart) / 1000 // Convert Wh to kWh
-}
 
 //
 // Helper function to determine status

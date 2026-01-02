@@ -12,6 +12,9 @@ import {
   HStack,
 } from '@chakra-ui/react';
 import { Field } from '@chakra-ui/react';
+import { ocppApi } from '@/app/lib/api';
+import { Toaster, toaster } from '@/components/ui/toaster';
+import { useRouter } from 'next/navigation';
 
 // Type definitions
 interface ChargePointConfig {
@@ -47,7 +50,8 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
     ...initialData,
     ...defaultData,
   });
-console.log({initialData, formData})
+  const router = useRouter();
+  // console.log({initialData, formData})
   const handleInputChange = (field: keyof ChargePointConfig, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -55,9 +59,31 @@ console.log({initialData, formData})
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.(formData);
+    
+
+    try {
+      const submitData = await ocppApi.updateChargePoint(formData.chargePoint.id, formData)
+      if (!submitData) {
+        toaster.create({
+          title: 'Update failed',
+          description: 'Something went wrong.',
+          type: 'error',
+          duration: 5000,
+        })
+        return
+      }
+      toaster.create({
+        title: 'Update Successful',
+        description: 'Charge station data updated sucessfully!',
+        type: 'success',
+        duration: 1000,
+      })
+      // return router.push('/chargepoint')
+    } catch (error) {
+
+    }
   };
 
   const handleCancel = () => {
@@ -69,7 +95,7 @@ console.log({initialData, formData})
       <Heading size="lg" mb={6}>
         Charge Point Configuration
       </Heading>
-      
+
       <form onSubmit={handleSubmit}>
         <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
           <GridItem>
@@ -185,7 +211,7 @@ console.log({initialData, formData})
             </Field.Root>
           </GridItem>
 
-                    <GridItem>
+          <GridItem>
             <Field.Root>
               <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
                 ICCID Number
@@ -201,7 +227,24 @@ console.log({initialData, formData})
               />
             </Field.Root>
           </GridItem>
-
+          <GridItem>
+            <Field.Root>
+              <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
+                Location
+              </Field.Label>
+              <Input
+                value={initialData.chargePoint.location}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                mt={1}
+                size="sm"
+                borderColor="gray.300"
+                _focus={{
+                  borderColor: '#ea2a33',
+                  boxShadow: '0 0 0 1px #ea2a33',
+                }}
+              />
+            </Field.Root>
+          </GridItem>
 
           <GridItem colSpan={{ base: 1, md: 2 }}>
             <Box borderTop="1px" borderColor="gray.200" pt={4} mt={2}>
@@ -291,6 +334,7 @@ console.log({initialData, formData})
           </GridItem>
         </Grid>
       </form>
+      <Toaster/>
     </Box>
   );
 };

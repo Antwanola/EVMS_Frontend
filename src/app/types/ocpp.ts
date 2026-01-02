@@ -66,9 +66,13 @@ export interface Transaction {
   meterStart: number;
   meterStop?: number;
   meterNow?: number;
+  stopTimestamp?: string | undefined;
+  startTimestamp?: string | undefined ;
   status: TransactionStatus;
   reason?: string;
   reservationId?: number;
+  startSoc?: number
+  stopSoC?: number
 }
 
 export interface OCPPCommandPayload {
