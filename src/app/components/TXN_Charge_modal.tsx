@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { RiBattery2ChargeLine } from 'react-icons/ri';
 import { ocppApi } from '../lib/api';
-import { API_BASE_URL } from '@/config/apiConfig';
+import { convertMeterValue, formatMeterValue } from '@/helper/unitConversions';
 
 interface MetricCardProps {
   label: string;
@@ -129,7 +129,7 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
           
           // For completed transactions, set the final meter data
           setMeterData({
-            meterValue: transaction.meterStop ? `${transaction.meterStop} Wh` : '--',
+            meterValue: transaction.meterStop ? convertMeterValue(`${transaction.meterStop} Wh`) : '--',
             voltage: '--', // Not available in transaction data
             current: '--', // Not available in transaction data  
             power: '--', // Not available in transaction data
@@ -205,10 +205,10 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
         // For completed transactions, we want to show the final values from transaction data
         if (!isTransactionCompleted) {
           setMeterData({
-            meterValue: getValue('Energy.Active.Import.Register', 'Wh'),
+            meterValue: convertMeterValue(getValue('Energy.Active.Import.Register', 'Wh')),
             voltage: getValue('Voltage', 'V'),
             current: getValue('Current.Import', 'A'),
-            power: getValue('Power.Active.Import', 'W'),
+            power: convertMeterValue(getValue('Power.Active.Import', 'W')),
             timestamp: new Date(data.timestamp).toLocaleTimeString(),
             soc: getValue('SoC', '%') // State of Charge
           });
