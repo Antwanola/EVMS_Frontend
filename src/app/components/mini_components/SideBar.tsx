@@ -14,6 +14,7 @@ import {
 import { NavItem, IconType } from "@/app/types/header_types";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { FaCar } from "react-icons/fa";
 
 export const Sidebar: React.FC = () => {
 const pathname = usePathname();
@@ -53,6 +54,11 @@ function isActive(pathname: string, item: NavItem) {
       href: "/chargepoint",
       // children: ""
       // active: true,
+    },
+    {
+      label: "Fleet",
+      icon:FaCar,
+      href: "/fleet"
     },
     { label: "Transactions", icon: MdReceiptLong, href: "/transactions" },
     { label: "Users", icon: MdGroup, href: "/users" },

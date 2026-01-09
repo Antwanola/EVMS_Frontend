@@ -21,13 +21,30 @@ interface ChargePointConfig {
   chargePointId: string;
   vendor: string;
   model: string;
+  meterType: string;
+  meterSerialNumber: string;
   firmwareVersion: string;
+  iccid: string;
+  location: string;
   networkProfile: string;
   csmsUrl: string;
 }
 
+interface ChargePointData {
+  chargePoint: {
+    id: string;
+    vendor: string;
+    model: string;
+    meterType?: string;
+    meterSerialNumber?: string;
+    firmwareVersion?: string;
+    iccid?: string;
+    location?: string;
+  };
+}
+
 interface ChargePointConfigFormProps {
-  initialData?: Partial<ChargePointConfig>;
+  initialData?: ChargePointData;
   onSubmit?: (data: ChargePointConfig) => void;
   onCancel?: () => void;
 }
@@ -36,7 +53,11 @@ const defaultData: ChargePointConfig = {
   chargePointId: 'CP-001',
   vendor: 'EVBox',
   model: 'Elvi',
+  meterType: '',
+  meterSerialNumber: '',
   firmwareVersion: '5.12.1',
+  iccid: '',
+  location: '',
   networkProfile: 'OCPP 1.6J JSON',
   csmsUrl: 'ws://csms.example.com/ocpp',
 };
@@ -46,10 +67,24 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<ChargePointConfig>({
-    ...initialData,
-    ...defaultData,
+  const [formData, setFormData] = useState<ChargePointConfig>(() => {
+    if (initialData?.chargePoint) {
+      return {
+        chargePointId: initialData.chargePoint.id || '',
+        vendor: initialData.chargePoint.vendor || '',
+        model: initialData.chargePoint.model || '',
+        meterType: initialData.chargePoint.meterType || '',
+        meterSerialNumber: initialData.chargePoint.meterSerialNumber || '',
+        firmwareVersion: initialData.chargePoint.firmwareVersion || '',
+        iccid: initialData.chargePoint.iccid || '',
+        location: initialData.chargePoint.location || '',
+        networkProfile: 'OCPP 1.6J JSON',
+        csmsUrl: 'ws://csms.example.com/ocpp',
+      };
+    }
+    return defaultData;
   });
+  
   const router = useRouter();
   // console.log({initialData, formData})
   const handleInputChange = (field: keyof ChargePointConfig, value: string) => {
@@ -62,27 +97,32 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-
     try {
-      const submitData = await ocppApi.updateChargePoint(formData.chargePoint.id, formData)
+      const submitData = await ocppApi.updateChargePoint(formData.chargePointId, formData);
       if (!submitData) {
         toaster.create({
           title: 'Update failed',
           description: 'Something went wrong.',
           type: 'error',
           duration: 5000,
-        })
-        return
+        });
+        return;
       }
       toaster.create({
         title: 'Update Successful',
-        description: 'Charge station data updated sucessfully!',
+        description: 'Charge station data updated successfully!',
         type: 'success',
         duration: 1000,
-      })
-      // return router.push('/chargepoint')
+      });
+      onSubmit?.(formData);
     } catch (error) {
-
+      console.error('Update error:', error);
+      toaster.create({
+        title: 'Update failed',
+        description: 'Failed to update charge point configuration.',
+        type: 'error',
+        duration: 5000,
+      });
     }
   };
 
@@ -104,7 +144,7 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Charge Point ID
               </Field.Label>
               <Input
-                value={initialData.chargePoint.id ?? ""}
+                value={formData.chargePointId}
                 onChange={(e) => handleInputChange('chargePointId', e.target.value)}
                 mt={1}
                 size="sm"
@@ -123,7 +163,7 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Vendor
               </Field.Label>
               <Input
-                value={initialData.chargePoint.vendor ?? ""}
+                value={formData.vendor}
                 onChange={(e) => handleInputChange('vendor', e.target.value)}
                 mt={1}
                 size="sm"
@@ -142,7 +182,7 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Model
               </Field.Label>
               <Input
-                value={initialData.chargePoint.model}
+                value={formData.model}
                 onChange={(e) => handleInputChange('model', e.target.value)}
                 mt={1}
                 size="sm"
@@ -161,8 +201,8 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Meter Type
               </Field.Label>
               <Input
-                value={initialData.chargePoint.meterType == null ? '' : initialData.chargePoint.meterType}
-                onChange={(e) => handleInputChange('model', e.target.value)}
+                value={formData.meterType}
+                onChange={(e) => handleInputChange('meterType', e.target.value)}
                 mt={1}
                 size="sm"
                 borderColor="gray.300"
@@ -180,8 +220,8 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Meter Serial Number
               </Field.Label>
               <Input
-                value={initialData.chargePoint.meterSerialNumber ?? ""}
-                onChange={(e) => handleInputChange('model', e.target.value)}
+                value={formData.meterSerialNumber}
+                onChange={(e) => handleInputChange('meterSerialNumber', e.target.value)}
                 mt={1}
                 size="sm"
                 borderColor="gray.300"
@@ -199,7 +239,7 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 Firmware Version
               </Field.Label>
               <Input
-                value={initialData.chargePoint.firmwareVersion ?? ""}
+                value={formData.firmwareVersion}
                 onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
                 disabled
                 mt={1}
@@ -217,24 +257,27 @@ export const ChargePointConfigForm: React.FC<ChargePointConfigFormProps> = ({
                 ICCID Number
               </Field.Label>
               <Input
-                value={initialData.chargePoint.iccid ?? ""}
-                onChange={(e) => handleInputChange('firmwareVersion', e.target.value)}
+                value={formData.iccid}
+                onChange={(e) => handleInputChange('iccid', e.target.value)}
                 mt={1}
                 size="sm"
                 borderColor="gray.300"
-                bg="gray.50"
-                color="gray.500"
+                _focus={{
+                  borderColor: '#ea2a33',
+                  boxShadow: '0 0 0 1px #ea2a33',
+                }}
               />
             </Field.Root>
           </GridItem>
+          
           <GridItem>
             <Field.Root>
               <Field.Label color="gray.700" fontSize="sm" fontWeight="medium">
                 Location
               </Field.Label>
               <Input
-                value={initialData.chargePoint.location}
-                onChange={(e) => handleInputChange('model', e.target.value)}
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
                 mt={1}
                 size="sm"
                 borderColor="gray.300"

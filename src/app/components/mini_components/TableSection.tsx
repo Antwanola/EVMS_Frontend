@@ -19,9 +19,10 @@ import { FaHeartCircleBolt } from "react-icons/fa6";
 interface ChargePointIDProps {
   chargePoint: ChargePoint | null;
   loading: boolean
+  id?: string
 }
 
-export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading }) => {
+export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading, id }) => {
   console.log("this is chargepoint", chargePoint?.chargePoint.connectors)
   return (
     <Box borderBottomWidth="1px" borderColor="gray.200">
@@ -57,7 +58,7 @@ export const TabsSection: React.FC<ChargePointIDProps> = ({ chargePoint, loading
             {/* Add more StatusCards as needed */}
           </Flex>
           <Box py={5}>
-            <ConnectorTable connectors={chargePoint?.chargePoint.connectors} />
+            <ConnectorTable connectors={chargePoint?.chargePoint.connectors} id={id} />
           </Box>
           <Box mt={10}>
             <RemoteControl />

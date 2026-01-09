@@ -45,3 +45,12 @@ export const findUserByIdTag = async (idTag: string): Promise<string | undefined
     return undefined
   }
 }
+
+//Helper to get desired measureand
+
+const getValue = (measurand: string, unit?: string, meterData?: any) => {
+  const item = meterData?.meterValue.sampledValue.find(
+    (v: any) => v.measurand === measurand
+  );
+  return item ? `${item.value}${unit ? ` ${unit}` : ''}` : '--';
+};

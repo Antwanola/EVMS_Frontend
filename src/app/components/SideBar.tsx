@@ -3,6 +3,7 @@
 import { Box, Flex, Text, VStack } from "@chakra-ui/react";
 import { Home, Settings, BarChart, Users } from "lucide-react"; // add any icons you need
 import Link from "next/link";
+import { FaCar } from "react-icons/fa";
 
 export function Sidebar() {
   return (
@@ -31,6 +32,9 @@ export function Sidebar() {
       <VStack align="stretch">
         <NavItem href="/" icon={<Home size={20} />}>
           Dashboard
+        </NavItem>
+         <NavItem href="/fleet" icon={<FaCar  size={20} />}>
+          Fleet
         </NavItem>
         <NavItem href="/reports" icon={<BarChart size={20} />}>
           Reports

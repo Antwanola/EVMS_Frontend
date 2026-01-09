@@ -60,7 +60,7 @@ export const EVChargeDashboard: React.FC<ID> = ({ id }) => {
             chargePoint={charger}
           />
 
-          <TabsSection chargePoint={charger} loading={loading} />
+          <TabsSection chargePoint={charger} loading={loading} id={id}/>
         </VStack>
       </Box>
     </Flex>

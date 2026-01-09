@@ -102,15 +102,34 @@ export const ocppApi = {
   getLatest5TXN: (filter: Record<string, string> = {}): Promise<ApiResponse<Transaction[]>> => 
     apiClient.get('/api/v1/transactions/latest/'),
 
-  getTransaction: (id: string): Promise<ApiResponse<Transaction>> =>
+  getTransaction: (id: number): Promise<ApiResponse<Transaction>> =>
     apiClient.get(`/api/v1/transactions/${id}`),
 
   // System
   getSystemStatus: (): Promise<ApiResponse<SystemStatus>> =>
     apiClient.get('/api/v1/status'),
 
+  // Server-Sent Events for real-time meter values
+  streamMeterValues: (chargePointId: string, connectorId: number): EventSource => {
+    // Get token from cookies
+    const token = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("token="))?.split("=")[1];
+    
+    const url = `${API_BASE_URL}/api/v1/stream-metervalues/${chargePointId}/${connectorId}`;
+    const urlWithToken = token ? `${url}?token=${token}` : url;
+    
+    const eventSource = new EventSource(urlWithToken, {
+      // withCredentials: true
+    });
+    
+    return eventSource;
+  },
+
   updateChargePoint: (chargePointId: string, data: Partial<ChargePoint>): Promise<ApiResponse<ChargePoint>> => 
     apiClient.post(`/api/v1/update-charge-point/${chargePointId}`, data),
+
+  
 };
 
 export const authApi = {
