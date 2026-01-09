@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -13,16 +13,9 @@ import {
   Progress,
   Portal,
 } from '@chakra-ui/react';
-import {
-  DialogRoot,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogBody,
-  DialogBackdrop,
-  DialogCloseTrigger,
-} from '@chakra-ui/react';
-import { RiBattery2ChargeLine, RiBatteryChargeLine } from 'react-icons/ri';
+import { RiBattery2ChargeLine } from 'react-icons/ri';
+import { ocppApi } from '../lib/api';
+import { API_BASE_URL } from '@/config/apiConfig';
 
 interface MetricCardProps {
   label: string;
@@ -30,6 +23,8 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ label, value }) => {
+
+
   return (
     <Box bg="gray.100" p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
       <VStack align="stretch" gap={2}>
@@ -48,17 +43,210 @@ interface ChargingSessionModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionId?: string;
+  chargePointId?: string;
+  connectorid?: string;
 }
 
 export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
   isOpen,
   onClose,
   transactionId,
+  chargePointId,
+  connectorid
 }) => {
-  if (!isOpen) return null;
+  // State for transaction data and real-time meter values
+  const [transactionData, setTransactionData] = useState<any>(null);
+  const [startSoC, setStartSoC] = useState<string>('--');
+  const [stopSoC, setStopSoC] = useState<string | null>(null);
+  const [isTransactionCompleted, setIsTransactionCompleted] = useState<boolean>(false);
+  const [meterData, setMeterData] = useState({
+    meterValue: '',
+    voltage: '',
+    current: '',
+    power: '',
+    timestamp: '',
+    soc: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Debug: Log current state values
+  console.log('Current state values:', {
+    startSoC,
+    stopSoC,
+    isTransactionCompleted,
+    meterDataSoC: meterData.soc,
+    hasTransactionData: !!transactionData
+  });
+
+  // Fetch transaction data when modal opens
+  useEffect(() => {
+    if (!isOpen || !transactionId) {
+      return;
+    }
+
+    const fetchTransactionData = async () => {
+      setLoading(true);
+      // Reset meter data to empty state but keep startSoC
+      setMeterData({
+        meterValue: '',
+        voltage: '',
+        current: '',
+        power: '',
+        timestamp: '',
+        soc: ''
+      });
+      // Don't reset startSoC here - only reset if we're fetching new transaction
+      setStopSoC(null);
+      setIsTransactionCompleted(false);
+
+      try {
+        const response = await ocppApi.getTransaction(Number(transactionId));
+        setTransactionData(response.data);                                                                                                                                                                                                                                     
+        
+        // Extract startSoC from transaction data
+        const transaction = response.data as any; // Type assertion to access dynamic properties
+        let initialSoC = '--';
+        let finalSoC = null;
+        
+        console.log("Full transaction:", transaction); // Debug: see full transaction structure
+        
+        // Check if transaction has startSoC (capital C)
+        if (transaction.startSoC !== null && transaction.startSoC !== undefined) {
+          initialSoC = `${transaction.startSoC}%`;
+          console.log("Found startSoC:", transaction.startSoC);
+          setStartSoC(initialSoC);
+        } else {
+          console.log("No startSoC found in transaction");
+          setStartSoC('--');
+        }
+        
+        // Check if transaction is completed (has stopSoC and stopTimestamp)
+        if (transaction.stopSoC !== null && transaction.stopSoC !== undefined && transaction.stopTimestamp) {
+          finalSoC = `${transaction.stopSoC}%`;
+          console.log("Found stopSoC:", transaction.stopSoC, "- Transaction completed");
+          setStopSoC(finalSoC);
+          setIsTransactionCompleted(true);
+          
+          // For completed transactions, set the final meter data
+          setMeterData({
+            meterValue: transaction.meterStop ? `${transaction.meterStop} Wh` : '--',
+            voltage: '--', // Not available in transaction data
+            current: '--', // Not available in transaction data  
+            power: '--', // Not available in transaction data
+            timestamp: transaction.stopTimestamp ? new Date(transaction.stopTimestamp).toLocaleTimeString() : '--',
+            soc: finalSoC
+          });
+        }
+        
+        console.log("Extracted SOC:", initialSoC);
+        console.log("Transaction completed:", !!finalSoC, "Final SoC:", finalSoC);
+        
+      } catch (error) {
+        console.error('Failed to fetch transaction data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactionData();
+  }, [isOpen, transactionId]);
+
+  useEffect(() => {
+    // Always connect to SSE if we have transaction data and modal is open
+    if (!isOpen || !transactionData) {
+      console.log('Skipping SSE connection:', { 
+        isOpen, 
+        hasTransactionData: !!transactionData
+      });
+      return;
+    }
+
+    // Use chargePointId and connectorId from the transaction data
+    const txnChargePointId = transactionData.chargePointId;
+    const txnConnectorId = transactionData.connectorId;
+
+    if (!txnChargePointId || !txnConnectorId) {
+      console.error('Missing chargePointId or connectorId in transaction data');
+      return;
+    }
+
+    console.log('Connecting to SSE for transaction:', transactionId);
+    console.log('Using chargePointId:', txnChargePointId, 'connectorId:', txnConnectorId);
+    console.log('Transaction completed status:', isTransactionCompleted);
+
+    // Create EventSource connection using transaction data
+    const eventSource = ocppApi.streamMeterValues(txnChargePointId, Number(txnConnectorId));
+    
+    // Debug: Check EventSource configuration
+    console.log('EventSource withCredentials:', eventSource.withCredentials);
+    console.log('EventSource URL:', eventSource.url);
+
+    // Handle connection opened
+    eventSource.onopen = () => {
+      console.log('SSE connection opened successfully');
+    };
+
+    // Handle incoming messages
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received meter data:', data);
+        
+        // Extract values from OCPP sampledValue array
+        const sampledValues = data.meterValue?.sampledValue || [];
+
+        // Helper function to get value by measurand
+        const getValue = (measurand: string, unit?: string) => {
+          const item = sampledValues.find((v: any) => v.measurand === measurand);
+          return item ? `${item.value}${unit ? ` ${unit}` : ''}` : '--';
+        };
+
+        // Only update meter data if transaction is NOT completed
+        // For completed transactions, we want to show the final values from transaction data
+        if (!isTransactionCompleted) {
+          setMeterData({
+            meterValue: getValue('Energy.Active.Import.Register', 'Wh'),
+            voltage: getValue('Voltage', 'V'),
+            current: getValue('Current.Import', 'A'),
+            power: getValue('Power.Active.Import', 'W'),
+            timestamp: new Date(data.timestamp).toLocaleTimeString(),
+            soc: getValue('SoC', '%') // State of Charge
+          });
+        }
+        
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
+
+    // Handle errors with more detailed logging
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      console.error('EventSource readyState:', eventSource.readyState);
+      console.error('EventSource URL:', eventSource.url);
+       
+      // EventSource readyState values:
+      // 0 = CONNECTING
+      // 1 = OPEN  
+      // 2 = CLOSED
+      
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('SSE connection was closed');
+      } else if (eventSource.readyState === EventSource.CONNECTING) {
+        console.log('SSE is trying to reconnect...');
+      }
+    };
+
+    // Cleanup function - IMPORTANT: close connection when modal closes
+    return () => {
+      console.log('Closing SSE connection');
+      eventSource.close();
+    };
+  }, [isOpen, transactionData, transactionId]);
 
   return (
     <Portal>
+     {isOpen && (<>
       <Box
         position="fixed"
         inset="0"
@@ -97,7 +285,7 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
             borderColor="gray.200"
           >
             <Text fontSize="lg" fontWeight="semibold" color="gray.900">
-              Live Charging Session — TXN #{transactionId || '123456'}
+              {isTransactionCompleted ? 'Completed' : 'Live'} Charging Session — TXN #{transactionId || 'Loading...'}
             </Text>
             <Box
               as="button"
@@ -119,6 +307,11 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
 
           {/* Body */}
           <Box p={6}>
+            {loading ? (
+              <Box textAlign="center" py={8}>
+                <Text color="gray.500">Loading transaction data...</Text>
+              </Box>
+            ) : (
             <VStack gap={6} align="stretch">
               {/* Metrics Grid */}
               <Grid
@@ -126,19 +319,19 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
                 gap={4}
               >
                 <GridItem>
-                  <MetricCard label="Meter Value" value="15.3 kWh" />
+                  <MetricCard label="Meter Value" value={meterData.meterValue} />
                 </GridItem>
                 <GridItem>
-                  <MetricCard label="Voltage" value="240 V" />
+                  <MetricCard label="Voltage" value={meterData.voltage} />
                 </GridItem>
                 <GridItem>
-                  <MetricCard label="Current" value="32 A" />
+                  <MetricCard label="Current" value={meterData.current} />
                 </GridItem>
                 <GridItem>
-                  <MetricCard label="Power" value="7.6 kW" />
+                  <MetricCard label="Power" value={meterData.power} />
                 </GridItem>
                 <GridItem colSpan={{ base: 2, md: 1, lg: 1 }}>
-                  <MetricCard label="Timestamp" value="14:32:05" />
+                  <MetricCard label="Timestamp" value={meterData.timestamp} />
                 </GridItem>
               </Grid>
 
@@ -155,26 +348,46 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
                       Vehicle State of Charge (SoC)
                     </Text>
                     <HStack gap={2} fontSize="sm" color="gray.600">
-                      <Text>Start: 22%</Text>
+                      <Text>Start: {startSoC || '--'}</Text>
                       <Text color="gray.400">|</Text>
-                      <Text>Current: 45%</Text>
+                      <Text>
+                        {isTransactionCompleted 
+                          ? `Final: ${stopSoC}` 
+                          : meterData.soc 
+                            ? `Current: ${meterData.soc}` 
+                            : 'Current: --'
+                        }
+                      </Text>
                     </HStack>
                   </Flex>
 
                   <Flex align="center" gap={4}>
                     <Box fontSize="4xl" color="blue.500">
-                      {/* ⚡ */}
                       <RiBattery2ChargeLine  />
                     </Box>
                     <Box flex="1">
-                      <Progress.Root value={45} size="lg" colorPalette="blue">
+                      <Progress.Root 
+                        value={parseInt(
+                          isTransactionCompleted 
+                            ? (stopSoC || '0') 
+                            : (meterData.soc || '0')
+                        ) || 0} 
+                        size="lg" 
+                        colorPalette={isTransactionCompleted ? "green" : "blue"}
+                      >
                         <Progress.Track bg="gray.200" borderRadius="full">
-                          <Progress.Range bg="#137fec" />
+                          <Progress.Range bg={isTransactionCompleted ? "#22c55e" : "#137fec"} />
                         </Progress.Track>
                       </Progress.Root>
                     </Box>
-                    <Text fontWeight="bold" fontSize="xl" color="blue.500" minW="14" textAlign="right">
-                      45%
+                    <Text 
+                      fontWeight="bold" 
+                      fontSize="xl" 
+                      color={isTransactionCompleted ? "green.500" : "blue.500"} 
+                      minW="14" 
+                      textAlign="right"
+                    >
+                      {isTransactionCompleted ? stopSoC : (meterData.soc || '--')}
                     </Text>
                   </Flex>
                 </VStack>
@@ -189,23 +402,23 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
                     </Text>
                     <Flex align="center" gap={2}>
                       <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-                        15.3 kWh
+                        {meterData.meterValue}
                       </Text>
                       <Badge
-                        bg="green.100"
-                        color="green.700"
+                        bg={isTransactionCompleted ? "green.100" : "blue.100"}
+                        color={isTransactionCompleted ? "green.700" : "blue.700"}
                         px={2}
                         py={0.5}
                         borderRadius="full"
                         fontSize="sm"
                         fontWeight="medium"
                       >
-                        +2.1%
+                        {isTransactionCompleted ? 'Completed' : 'Live'}
                       </Badge>
                     </Flex>
                   </Box>
 
-                  <Box minH="220px" py={4}>
+                  {/* <Box minH="220px" py={4}>
                     <svg fill="none" height="100%" preserveAspectRatio="none" viewBox="-3 0 478 150" width="100%">
                       <path
                         d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25V149H326.769H0V109Z"
@@ -232,13 +445,15 @@ export const ChargingSessionModal: React.FC<ChargingSessionModalProps> = ({
                         </Text>
                       ))}
                     </Flex>
-                  </Box>
+                  </Box> */}
                 </VStack>
               </Box>
             </VStack>
+            )}
           </Box>
         </Box>
       </Box>
+     </>)}
     </Portal>
   );
 };

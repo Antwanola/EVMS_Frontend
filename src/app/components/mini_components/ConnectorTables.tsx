@@ -28,6 +28,7 @@ interface Connector {
 
 interface ConnectorTableProps {
   connectors?: Connector[];
+  id: string
 }
 
 const statusIcons: Record<string, IconType | null> = {
@@ -97,10 +98,12 @@ const getActionText = (status: Connector["status"]) => {
 
 export const ConnectorTable: React.FC<ConnectorTableProps> = ({
   connectors,
+  id,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
-
+  const [selectedTransactionId, setSelectedTransactionId] = useState(0);
+  const [selectedConnectorId, setSelectedConnectorId] = useState(0)
+  const [chargePointId, setChargePointId] = useState("")
 
   const sortedConnectors = (connectors: Connector[]) => {
     const filtered = connectors.filter(
@@ -118,8 +121,12 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
 
   }
 
-  const handleOpenModal = (id: number) => {
-    setSelectedTransactionId(id);
+  const handleOpenModal = (TxnId: number, connectorId: number, chargePointId: string) => {
+    setSelectedTransactionId(TxnId);
+    setSelectedConnectorId(connectorId);
+    setChargePointId(chargePointId)
+
+
     setIsModalOpen(true);
 
   }
@@ -129,7 +136,9 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        transactionId={selectedTransactionId ?? ""}
+        transactionId={selectedTransactionId ?? 0}
+        chargePointId = {id}
+        connectorid={selectedConnectorId}
       />
       <Heading size="lg" mb={4} fontWeight={"black"}>
         Connectors
@@ -232,7 +241,8 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
                       onClick={(e) => {
                         e.preventDefault();
                         if (connector.currentTransactionId) {
-                          handleOpenModal(connector.currentTransactionId);
+                          console.log("connector",connector)
+                          handleOpenModal(connector.currentTransactionId, connector.connectorId, id);
                         }
                       }}
                       color={connector.currentTransactionId ? "blue.500" : "gray.500"} // Use blue only if ID exists

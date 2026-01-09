@@ -3,33 +3,23 @@
 import React, { useEffect, useState } from 'react'
 import {
   Box,
-  Flex,
   Heading,
   Text,
   Grid,
   GridItem,
   Table,
   Badge,
-  Avatar,
-  HStack,
   VStack,
   Container,
   Link,
 } from '@chakra-ui/react'
 import { ocppApi } from '../lib/api'
-import { ChargePoint } from '../types/ocpp';
+import { ChargePoint, Transaction, ChargePointStatus } from '../types/ocpp';
 import { PiPlugsConnectedFill, PiPlugsFill, PiPlugsLight } from 'react-icons/pi'
 import NextLink from "next/link";
+import { calculateDuration, calculateEnergy, findUserByIdTag, useUserCache } from '@/helper';
 
 // Types
-interface ChargePointStatus {
-  id: string
-  status: true | false
-  lastActivity: string
-  location: string
-  icon?: string
-}
-
 interface RecentActivity {
   chargePointId: string
   user: string
@@ -38,41 +28,25 @@ interface RecentActivity {
   energyConsumed: number
 }
 
-interface DashboardProps {
-  totalChargePoints?: number
-  onlineChargePoints?: number
-  chargingChargePoints?: number
-  chargePointStatuses?: ChargePointStatus[]
-  recentActivities?: RecentActivity[]
-}
-
 // Status color mapping
 const getStatusColor = (status: boolean | undefined) => {
   if (status === true) return 'green'
-  if(status === false) return 'gray'
+  if (status === false) return 'gray'
   return 'gray'
 }
 const showStatus = (status: boolean | undefined) => {
   if (status === true) return "Online"
-  if(status === false) return "Ofline"
+  if (status === false) return "Ofline"
   return 'Charging'
 }
 
 const showIcons = (status: boolean | undefined) => {
-  if (status === true) return <PiPlugsConnectedFill     />
-  if (status === false) return <PiPlugsFill  />
-  return  <PiPlugsLight />
+  if (status === true) return <PiPlugsConnectedFill />
+  if (status === false) return <PiPlugsFill />
+  return <PiPlugsLight />
 }
 
 // Sample defaults
-const defaultChargePointStatuses: ChargePointStatus[] = [
-  { id: 'CP001', status: 'Online', lastActivity: '5 minutes ago', location: 'Parking Lot A', icon: '⚡' },
-  { id: 'CP002', status: 'Offline', lastActivity: '2 hours ago', location: 'Parking Lot B', icon: '🔌' },
-  { id: 'CP003', status: 'Charging', lastActivity: '1 minute ago', location: 'Parking Lot A', icon: '🔋' },
-  { id: 'CP004', status: 'Online', lastActivity: '10 minutes ago', location: 'Parking Lot C', icon: '⚡' },
-  { id: 'CP005', status: 'Offline', lastActivity: '3 hours ago', location: 'Parking Lot B', icon: '🔌' },
-]
-
 const defaultRecentActivities: RecentActivity[] = [
   { chargePointId: 'CP003', user: 'Alice Johnson', startTime: '10:00 AM', endTime: '10:30 AM', energyConsumed: 15 },
   { chargePointId: 'CP001', user: 'Bob Williams', startTime: '9:00 AM', endTime: '9:45 AM', energyConsumed: 22 },
@@ -93,55 +67,59 @@ export const formatDateTime = (isoString: string) => {
     timeZone: "Africa/Lagos",
   }).format(date);
 };
-const Dashboard: React.FC<DashboardProps> = ({
-  chargePointStatuses = defaultChargePointStatuses,
-  recentActivities = defaultRecentActivities,
-}) => {
+const Dashboard: React.FC = () => {
   const [chargers, setChargers] = useState<ChargePoint[] | null>(null)
-  const [state, setState] = useState();
-  const [loading, setLoading ] = useState(true)
+  const [five_transactions, setTransactions] = useState<Transaction[] | null>(null)
+  const [usernames, setUsernames] = useState<Map<string, string>>(new Map())
+  const [loading, setLoading] = useState(true)
   // const data = getChargers()
 
-const formatDateTime = (isoString: string) => {
-  if (!isoString) return "-";
-  const date = new Date(isoString);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-};
-
-
-// Fetch chargers on mount
-useEffect(() => {
-  const getChargers = async () => {
-    try {
-      const OCPPAPI = await ocppApi.getChargePoints();
-      console.log(OCPPAPI.data)
-      setChargers(OCPPAPI.data);
-    } catch (error) {
-      console.error("Failed to fetch chargers:", error);
-    } finally {
-      setLoading(false);
-    }
+  const formatDateTime = (isoString: string) => {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    return new Intl.DateTimeFormat("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
   };
 
-  // fetch once on mount
-  getChargers();
 
-  // fetch every 5s
-  const interval = setInterval(getChargers, 5000);
+  // Fetch chargers on mount
+  useEffect(() => {
+    const getChargers = async () => {
+      try {
+        const OCPPAPI = await ocppApi.getChargePoints();
+        const getTXN5 = await ocppApi.getLatest5TXN()
+        // Handle the case where transactions might be nested or direct array
+        const transactions = Array.isArray(getTXN5.data.transactions) ? getTXN5.data.transactions : (getTXN5.data as any)?.transactions || [];
+        setTransactions(transactions)
+        setChargers(OCPPAPI.data);
+         console.log({five_transactions, data: getTXN5.data.transactions})
+      } catch (error) {
+        console.error("Failed to fetch chargers:", error);
+      } finally {
+        setLoading(false);
+      }
+      
+    };
 
-  // cleanup
-  return () => clearInterval(interval);
-}, []);
+    // fetch once on mount
+    getChargers();
+   
+
+    // fetch every 5s
+    const interval = setInterval(getChargers, 5000);
+
+    // cleanup
+    return () => clearInterval(interval);
+  }, []);
 
 
-const totalChargePoints = chargers?.length || 0
-const  onlineChargePoints = chargers?.filter(cp => cp.isConnected === true).length || 0
-const chargingChargePoints = chargers?.filter(cp => cp.isConnected === undefined).length || 0
+  const totalChargePoints = chargers?.length || 0
+  const onlineChargePoints = chargers?.filter(cp => cp.isConnected === true).length || 0
+  const chargingChargePoints = chargers?.filter(cp => cp.status === ChargePointStatus.CHARGING).length || 0
 
-console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
+  console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
 
 
   return (
@@ -159,8 +137,8 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
           <Grid templateColumns={{ base: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6} mb={12}>
             <GridItem>
               <Box bg="white" p={6} rounded="xl" border="1px" borderColor="gray.200">
-                <VStack align="flex-start" spacing={2}>
-                  <Text color="gray.600" fontSize="sm" fontWeight="medium">Total Charge Points</Text>
+                <VStack align="flex-start" gap={2}>
+                  <Text color="gray.600" fontSize="sm" fontWeight="medium">Total Charge stations</Text>
                   <Text color="gray.900" fontSize="4xl" fontWeight="bold">{totalChargePoints}</Text>
                 </VStack>
               </Box>
@@ -168,7 +146,7 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
 
             <GridItem>
               <Box bg="white" p={6} rounded="xl" border="1px" borderColor="gray.200">
-                <VStack align="flex-start" spacing={2}>
+                <VStack align="flex-start" gap={2}>
                   <Text color="gray.600" fontSize="sm" fontWeight="medium">Online</Text>
                   <Text color="green.500" fontSize="4xl" fontWeight="bold">{onlineChargePoints}</Text>
                 </VStack>
@@ -177,7 +155,7 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
 
             <GridItem>
               <Box bg="white" p={6} rounded="xl" border="1px" borderColor="gray.200">
-                <VStack align="flex-start" spacing={2}>
+                <VStack align="flex-start" gap={2}>
                   <Text color="gray.600" fontSize="sm" fontWeight="medium">Charging</Text>
                   <Text color="blue.500" fontSize="4xl" fontWeight="bold">{chargingChargePoints}</Text>
                 </VStack>
@@ -187,25 +165,25 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
 
           {/* Charge Point Status Table */}
           <Box mb={12}>
-            <Heading size="lg" fontWeight="bold" mb={4}>Charge Point Status</Heading>
+            <Heading size="lg" fontWeight="bold" mb={4}>Charge Station Status</Heading>
             <Box overflow="hidden" rounded="xl" border="1px" borderColor="gray.200" bg="white">
               <Table.Root size="sm">
                 <Table.Header bg="gray.50">
                   <Table.Row bg={'gray.100'} >
-                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Charge Point ID</Table.ColumnHeader>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Charge Station ID</Table.ColumnHeader>
                     <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Status</Table.ColumnHeader>
                     <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Last Activity</Table.ColumnHeader>
                     <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Location</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {chargers?.map((cp) => (
-                    <Table.Row key={cp.chargePoint.id}>
+                  {chargers?.map((cp, index) => (
+                    <Table.Row key={index || `charger-${index}`}>
                       <Table.Cell px={6} py={4} fontWeight="medium">
-                         <Link as={NextLink} href={`/chargepoint/${cp.chargePoint.id}`} color="blue.500" _hover={{ textDecoration: "underline" }}>
-                         {cp.chargePoint.id}
-                         </Link>
-                        </Table.Cell>
+                        <Link as={NextLink} href={`/chargepoint/${cp.chargePoint.id}`} color="blue.500" _hover={{ textDecoration: "underline" }}>
+                          {cp.chargePoint.id}
+                        </Link>
+                      </Table.Cell>
                       <Table.Cell px={6} py={4}>
                         <Badge
                           bg={`${getStatusColor(cp.isConnected)}.300`}
@@ -217,12 +195,12 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
                           alignItems="center"
                           gap={2}
                         >
-                          <Box>{showIcons(cp.isConnected)}</Box>
+                          <Box>{showIcons(cp.chargePoint.isConnected)}</Box>
                           {showStatus(cp.isConnected)}
                         </Badge>
                       </Table.Cell>
                       <Table.Cell px={6} py={4} color="gray.500">{formatDateTime(cp.chargePoint.lastSeen)}</Table.Cell>
-                      <Table.Cell px={6} py={4} color="gray.500">{cp.location}</Table.Cell>
+                      <Table.Cell px={6} py={4} color="gray.500">{cp.chargePoint.location}</Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
@@ -236,24 +214,33 @@ console.log('cp:', chargers?.map(cp => cp.chargePoint.id));
             <Box overflow="hidden" rounded="xl" border="1px" borderColor="gray.200" bg="white">
               <Table.Root size="sm">
                 <Table.Header bg="gray.50">
-                  <Table.Row>
-                    <Table.ColumnHeader px={6} py={3}>Charge Point ID</Table.ColumnHeader>
-                    <Table.ColumnHeader px={6} py={3}>User</Table.ColumnHeader>
-                    <Table.ColumnHeader px={6} py={3}>Start Time</Table.ColumnHeader>
-                    <Table.ColumnHeader px={6} py={3}>End Time</Table.ColumnHeader>
-                    <Table.ColumnHeader px={6} py={3}>Energy Consumed (kWh)</Table.ColumnHeader>
+                  <Table.Row bg={"gray.100"}>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Charge Station ID</Table.ColumnHeader>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Operator</Table.ColumnHeader>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Duration</Table.ColumnHeader>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Connector</Table.ColumnHeader>
+                    <Table.ColumnHeader px={6} py={3} fontWeight={'900'}>Energy Consumed (kWh)</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {recentActivities.map((activity, index) => (
-                    <Table.Row key={index}>
-                      <Table.Cell px={6} py={4} fontWeight="medium">{activity.chargePointId}</Table.Cell>
-                      <Table.Cell px={6} py={4} color="gray.500">{activity.user}</Table.Cell>
-                      <Table.Cell px={6} py={4} color="gray.500">{activity.startTime}</Table.Cell>
-                      <Table.Cell px={6} py={4} color="gray.500">{activity.endTime}</Table.Cell>
-                      <Table.Cell px={6} py={4} color="gray.500">{activity.energyConsumed}</Table.Cell>
+                  {five_transactions?.map((txn, index) => (
+                    <Table.Row key={txn.id || index}>
+                      <Table.Cell px={6} py={4} fontWeight="medium">{txn.chargePointId}</Table.Cell>
+                      <Table.Cell px={6} py={4} color="gray.500">{(txn.idTag?.user.firstname)??  "-"}</Table.Cell>
+                      <Table.Cell px={6} py={4} color="gray.500">{calculateDuration(txn?.startTimestamp, txn.stopTimestamp || null)}</Table.Cell>
+                      <Table.Cell px={6} py={4} color="gray.500">{txn.connectorId}</Table.Cell>
+                      <Table.Cell px={6} py={4} color="gray.500">{(() => {
+                        const energy = calculateEnergy(txn.meterStart, txn.meterStop);
+                        return energy ? `${energy} kWh` : '-';
+                      })()}</Table.Cell>
                     </Table.Row>
-                  ))}
+                  )) || (
+                      <Table.Row>
+                        <Table.Cell colSpan={5} px={6} py={4} textAlign="center" color="gray.500">
+                          No recent transactions
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
                 </Table.Body>
               </Table.Root>
             </Box>

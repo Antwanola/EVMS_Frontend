@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 "use client";
 
 import { Box, ChakraProvider, Flex } from "@chakra-ui/react";
@@ -6,6 +5,7 @@ import theme from "@/theme";
 import { Sidebar } from "./components/mini_components/SideBar";
 import { usePathname } from "next/navigation";
 import { Manrope } from "next/font/google";
+import dynamic from "next/dynamic";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -13,30 +13,41 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
+// Create a client-only layout component
+const ClientLayout = dynamic(() => Promise.resolve(({ children }: { children: React.ReactNode }) => {
+  const pathName = usePathname();
+  const isLogin = pathName === "/login" || pathName === "/";
+
+  return (
+    <>
+      {isLogin ? (
+        children
+      ) : (
+        <Flex>
+          <Box minH="100%" w="250px">
+            <Sidebar />
+          </Box>
+          <Box flex="1">
+            {children}
+          </Box>
+        </Flex>
+      )}
+    </>
+  );
+}), { ssr: false });
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathName = usePathname();
-  const isLogin = pathName === "/login" || pathName === "/";
-
   return (
     <html lang="en" className={manrope.variable}>
       <body>
         <ChakraProvider value={theme}>
-          {isLogin ? (
-            children
-          ) : (
-            <Flex>
-              <Box minH="100%" w="250px">
-                <Sidebar />
-              </Box>
-              <Box flex="1">
-                {children}
-              </Box>
-            </Flex>
-          )}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
         </ChakraProvider>
       </body>
     </html>
