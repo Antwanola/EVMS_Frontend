@@ -200,7 +200,7 @@ const ChargePoints: React.FC = () => {
                           <HStack spacing={2}>
                             <Circle size="8" bg="blue.50" color="blue.500">
                               <Text fontSize="lg" fontWeight="bold">
-                                {cp.chargePoint?.connectors.length || 1}
+                                {cp.chargePoint?.connectors.length - 1 || 1}
                               </Text>
                             </Circle>
                             <Box>

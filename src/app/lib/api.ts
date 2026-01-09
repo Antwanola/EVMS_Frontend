@@ -9,13 +9,13 @@ class ApiClient {
     const token = document.cookie
       .split("; ")
       .find(row => row.startsWith("token="))?.split("=")[1];
-    console.log("API Client Token:", token);
+    console.log("API Client Token:", token ? "Present" : "Missing");
     
     const url = `${this.baseURL}${endpoint}`;
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
       },
       credentials: "include",
       ...options,
@@ -32,7 +32,15 @@ class ApiClient {
         const errorData: ApiError = await response.json().catch(() => ({
           error: `HTTP ${response.status}: ${response.statusText}`
         }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        
+        // Handle specific authentication errors
+        if (response.status === 401) {
+          console.error('Authentication failed - token may be expired or invalid');
+          // Optionally redirect to login or clear invalid token
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+        
+        throw new Error(errorData.error || `Authentication failed`);
       }
 
       return await response.json();
